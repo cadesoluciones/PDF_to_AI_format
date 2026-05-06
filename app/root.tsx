@@ -10,6 +10,7 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 
+// Carga global de fuentes para que todas las rutas compartan la misma base visual.
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -23,6 +24,7 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+// Layout raiz de React Router: aqui se define el HTML comun y se inyectan estilos/scripts.
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -41,10 +43,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Outlet renderiza la ruta activa definida en app/routes.ts.
 export default function App() {
   return <Outlet />;
 }
 
+// Boundary global para que los errores de ruta o renderizado tengan una salida visible.
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";

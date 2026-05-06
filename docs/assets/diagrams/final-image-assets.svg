@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="740" viewBox="0 0 1200 740" role="img" aria-labelledby="title desc">
+  <title id="title">Manejo de imagenes en PDFs</title>
+  <desc id="desc">Diagrama de extraccion de imagenes, conversion a base64, fallback y entrega a Markdown, JSON e IA.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#0891b2"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #475569; }
+      .card { fill: white; stroke: #cbd5e1; stroke-width: 2; rx: 18; }
+      .pdf { fill: #eff6ff; stroke: #60a5fa; }
+      .img { fill: #fdf2f8; stroke: #f472b6; }
+      .asset { fill: #ecfeff; stroke: #22d3ee; }
+      .ok { fill: #ecfdf5; stroke: #34d399; }
+      .warn { fill: #fffbeb; stroke: #f59e0b; }
+      .label { font: 700 18px Arial, sans-serif; fill: #111827; }
+      .body { font: 400 14px Arial, sans-serif; fill: #475569; }
+      .mono { font: 400 13px Consolas, monospace; fill: #334155; }
+      .arrow { stroke: #0891b2; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #f59e0b; stroke-width: 3; stroke-dasharray: 9 7; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="740"/>
+  <text x="60" y="58" class="title">Imagenes: texto + assets para IA</text>
+  <text x="60" y="86" class="subtitle">Las fotos del PDF se intentan extraer como archivos externos y se convierten a data URI base64.</text>
+
+  <rect x="70" y="155" width="220" height="120" class="card pdf"/>
+  <text x="100" y="192" class="label">PDF original</text>
+  <text x="100" y="220" class="body">texto + fotos</text>
+  <text x="100" y="243" class="body">tablas + capturas</text>
+
+  <rect x="370" y="155" width="245" height="120" class="card img"/>
+  <text x="400" y="192" class="label">OpenDataLoader</text>
+  <text x="400" y="220" class="mono">imageOutput: external</text>
+  <text x="400" y="243" class="mono">imageDir: tmp/images</text>
+
+  <rect x="705" y="155" width="245" height="120" class="card asset"/>
+  <text x="735" y="192" class="label">Node lee assets</text>
+  <text x="735" y="220" class="body">detecta extension</text>
+  <text x="735" y="243" class="mono">buffer.toString("base64")</text>
+
+  <rect x="130" y="395" width="265" height="135" class="card ok"/>
+  <text x="160" y="432" class="label">Markdown</text>
+  <text x="160" y="460" class="body">intenta reemplazar refs</text>
+  <text x="160" y="483" class="mono">![](data:image/...)</text>
+  <text x="160" y="506" class="body">queda autocontenido</text>
+
+  <rect x="468" y="395" width="265" height="135" class="card ok"/>
+  <text x="498" y="432" class="label">JSON</text>
+  <text x="498" y="460" class="body">devuelve content</text>
+  <text x="498" y="483" class="body">devuelve assets[]</text>
+  <text x="498" y="506" class="mono">dataUri: "data:image..."</text>
+
+  <rect x="805" y="395" width="265" height="135" class="card warn"/>
+  <text x="835" y="432" class="label">Fallback</text>
+  <text x="835" y="460" class="body">si imagenes fallan</text>
+  <text x="835" y="483" class="body">reintenta sin imagenes</text>
+  <text x="835" y="506" class="mono">imageOutput: off</text>
+
+  <rect x="310" y="610" width="580" height="64" class="card pdf"/>
+  <text x="340" y="648" class="label">Salida apta para IA: contenido textual + imagenes en base64 cuando esten disponibles</text>
+
+  <path class="arrow" d="M290 215 H360"/>
+  <path class="arrow" d="M615 215 H695"/>
+  <path class="arrow" d="M780 275 C725 335 420 342 277 388"/>
+  <path class="arrow" d="M830 275 C760 335 645 350 600 388"/>
+  <path class="dash" d="M950 275 C1025 330 1010 360 950 388"/>
+  <path class="arrow" d="M263 530 C340 580 460 592 560 607"/>
+  <path class="arrow" d="M600 530 V600"/>
+  <path class="dash" d="M936 530 C850 585 740 598 640 607"/>
+</svg>

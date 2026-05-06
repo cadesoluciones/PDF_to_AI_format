@@ -8,9 +8,9 @@ interface ConversionOptionCardProps {
 
 export default function ConversionOptionCard({ option, selected, onSelect }: ConversionOptionCardProps) {
 
+    // La tarjeta no decide el flujo; envia la opcion completa al padre.
     function handleClick() {
         onSelect(option);
-        console.log("Opción seleccionada:", option);
     }
 
   return (

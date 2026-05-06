@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitectura final del conversor PDF</title>
+  <desc id="desc">Diagrama general del flujo desde la interfaz React hasta el backend Express, OpenDataLoader y la descarga de resultados.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#2563eb"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #475569; }
+      .lane-title { font: 700 15px Arial, sans-serif; fill: #334155; letter-spacing: 1px; }
+      .box { fill: white; stroke: #cbd5e1; stroke-width: 2; rx: 16; filter: url(#shadow); }
+      .box-blue { fill: #eff6ff; stroke: #60a5fa; }
+      .box-green { fill: #ecfdf5; stroke: #34d399; }
+      .box-amber { fill: #fffbeb; stroke: #f59e0b; }
+      .box-rose { fill: #fff1f2; stroke: #fb7185; }
+      .box-purple { fill: #f5f3ff; stroke: #a78bfa; }
+      .label { font: 700 18px Arial, sans-serif; fill: #111827; }
+      .body { font: 400 14px Arial, sans-serif; fill: #475569; }
+      .small { font: 400 12px Arial, sans-serif; fill: #64748b; }
+      .arrow { stroke: #2563eb; stroke-width: 3; fill: none; marker-end: url(#arrow-blue); }
+      .soft-line { stroke: #e2e8f0; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="720"/>
+  <text x="60" y="58" class="title">Flujo final del proyecto</text>
+  <text x="60" y="86" class="subtitle">Un PDF y una carpeta usan el mismo contrato: siempre vuelve una respuesta con results[].</text>
+
+  <rect x="50" y="125" width="250" height="525" rx="24" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <rect x="330" y="125" width="250" height="525" rx="24" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <rect x="610" y="125" width="250" height="525" rx="24" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <rect x="890" y="125" width="250" height="525" rx="24" fill="#f1f5f9" stroke="#e2e8f0"/>
+
+  <text x="80" y="157" class="lane-title">FRONTEND</text>
+  <text x="360" y="157" class="lane-title">API CLIENT</text>
+  <text x="640" y="157" class="lane-title">BACKEND</text>
+  <text x="920" y="157" class="lane-title">RESULTADO</text>
+
+  <rect x="80" y="190" width="190" height="92" class="box box-blue"/>
+  <text x="104" y="223" class="label">Conversion cards</text>
+  <text x="104" y="250" class="body">PDF o Directorio</text>
+  <text x="104" y="271" class="small">json / markdown</text>
+
+  <rect x="80" y="330" width="190" height="105" class="box box-blue"/>
+  <text x="104" y="363" class="label">DocumentPreview</text>
+  <text x="104" y="390" class="body">Selecciona archivos</text>
+  <text x="104" y="411" class="small">previewFile + selectedFiles[]</text>
+
+  <rect x="360" y="260" width="190" height="120" class="box box-purple"/>
+  <text x="385" y="294" class="label">processFile.tsx</text>
+  <text x="385" y="321" class="body">transformFile</text>
+  <text x="385" y="342" class="body">transformFiles</text>
+  <text x="385" y="363" class="small">FormData + mode</text>
+
+  <rect x="640" y="190" width="190" height="100" class="box box-green"/>
+  <text x="664" y="223" class="label">Express API</text>
+  <text x="664" y="250" class="body">/transformfile</text>
+  <text x="664" y="271" class="body">/transformfiles</text>
+
+  <rect x="640" y="345" width="190" height="120" class="box box-amber"/>
+  <text x="664" y="379" class="label">convertPdfBuffer</text>
+  <text x="664" y="406" class="body">tmp PDF + output</text>
+  <text x="664" y="427" class="body">OpenDataLoader</text>
+  <text x="664" y="448" class="small">fallback sin imagenes</text>
+
+  <rect x="920" y="210" width="190" height="112" class="box box-green"/>
+  <text x="944" y="244" class="label">ConversionResponse</text>
+  <text x="944" y="271" class="body">success + mode</text>
+  <text x="944" y="292" class="small">results: item[]</text>
+
+  <rect x="920" y="390" width="190" height="105" class="box box-rose"/>
+  <text x="944" y="423" class="label">ConversionDisplay</text>
+  <text x="944" y="450" class="body">copiar / descargar</text>
+  <text x="944" y="471" class="small">archivo o ZIP</text>
+
+  <path class="arrow" d="M270 236 H350"/>
+  <path class="arrow" d="M270 382 H340 Q355 382 360 360"/>
+  <path class="arrow" d="M550 320 H620 Q640 320 640 290"/>
+  <path class="arrow" d="M735 290 V340"/>
+  <path class="arrow" d="M830 405 H895 Q920 405 920 322"/>
+  <path class="arrow" d="M1015 322 V382"/>
+
+  <line x1="80" y1="545" x2="1110" y2="545" class="soft-line"/>
+  <text x="86" y="580" class="label">Regla clave</text>
+  <text x="86" y="610" class="body">La arquitectura no se rehace: se amplia el flujo existente para que single y batch compartan la misma forma de respuesta.</text>
+</svg>

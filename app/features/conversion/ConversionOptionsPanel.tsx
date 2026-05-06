@@ -7,6 +7,7 @@ interface ConversionOptionsPanelProps {
   onOptionSelect: (option: ConversionOption) => void;
 }
 
+// Panel sin estado propio: solo pinta las opciones y avisa al componente padre.
 export default function ConversionOptionsPanel({ options, activeOption, onOptionSelect }: ConversionOptionsPanelProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">

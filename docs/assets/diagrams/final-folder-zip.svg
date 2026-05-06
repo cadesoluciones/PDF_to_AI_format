@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Conversion de carpeta y descarga ZIP</title>
+  <desc id="desc">Flujo desde la seleccion de una carpeta de PDFs hasta la conversion multiple y descarga comprimida.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#ea580c"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #475569; }
+      .card { fill: white; stroke: #cbd5e1; stroke-width: 2; rx: 18; }
+      .folder { fill: #fff7ed; stroke: #fb923c; }
+      .state { fill: #eff6ff; stroke: #60a5fa; }
+      .api { fill: #f0fdf4; stroke: #4ade80; }
+      .zip { fill: #fefce8; stroke: #eab308; }
+      .label { font: 700 18px Arial, sans-serif; fill: #111827; }
+      .body { font: 400 14px Arial, sans-serif; fill: #475569; }
+      .mono { font: 400 13px Consolas, monospace; fill: #334155; }
+      .arrow { stroke: #ea580c; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="720"/>
+  <text x="60" y="58" class="title">Carpetas: varios PDFs, mismo motor</text>
+  <text x="60" y="86" class="subtitle">No se crea otra arquitectura: se llama a la misma conversion por cada PDF y se empaqueta el resultado.</text>
+
+  <rect x="70" y="145" width="230" height="125" class="card folder"/>
+  <text x="100" y="181" class="label">Directorio</text>
+  <text x="100" y="209" class="body">input con directory mode</text>
+  <text x="100" y="232" class="body">filtra solo PDFs</text>
+  <text x="100" y="255" class="mono">File[]</text>
+
+  <rect x="380" y="145" width="230" height="125" class="card state"/>
+  <text x="410" y="181" class="label">Estado React</text>
+  <text x="410" y="209" class="mono">selectedFiles[]</text>
+  <text x="410" y="232" class="mono">previewFile</text>
+  <text x="410" y="255" class="body">primer PDF visible</text>
+
+  <rect x="690" y="145" width="230" height="125" class="card api"/>
+  <text x="720" y="181" class="label">API cliente</text>
+  <text x="720" y="209" class="mono">transformFiles()</text>
+  <text x="720" y="232" class="body">FormData: files + mode</text>
+  <text x="720" y="255" class="mono">POST /transformfiles</text>
+
+  <rect x="70" y="390" width="280" height="155" class="card api"/>
+  <text x="100" y="426" class="label">Backend</text>
+  <text x="100" y="454" class="body">recorre PDFs uno por uno</text>
+  <text x="100" y="477" class="body">convierte con convertPdfBuffer</text>
+  <text x="100" y="500" class="body">guarda success/error por archivo</text>
+  <text x="100" y="523" class="mono">results: ConversionResultItem[]</text>
+
+  <rect x="460" y="390" width="280" height="155" class="card state"/>
+  <text x="490" y="426" class="label">ConversionDisplay</text>
+  <text x="490" y="454" class="body">lista cada resultado</text>
+  <text x="490" y="477" class="body">permite copiar</text>
+  <text x="490" y="500" class="body">permite descarga individual</text>
+  <text x="490" y="523" class="body">muestra errores por PDF</text>
+
+  <rect x="850" y="390" width="280" height="155" class="card zip"/>
+  <text x="880" y="426" class="label">JSZip</text>
+  <text x="880" y="454" class="body">incluye solo items correctos</text>
+  <text x="880" y="477" class="body">crea conversion-results.zip</text>
+  <text x="880" y="500" class="body">sin endpoint extra</text>
+  <text x="880" y="523" class="mono">zip.generateAsync()</text>
+
+  <path class="arrow" d="M300 207 H370"/>
+  <path class="arrow" d="M610 207 H680"/>
+  <path class="arrow" d="M805 270 C805 335 360 328 230 382"/>
+  <path class="arrow" d="M350 467 H450"/>
+  <path class="arrow" d="M740 467 H840"/>
+
+  <rect x="260" y="610" width="680" height="48" rx="12" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="286" y="640" class="body">La carpeta no se convierte como carpeta magica: se convierte cada PDF de forma controlada y se agrupa la salida.</text>
+</svg>

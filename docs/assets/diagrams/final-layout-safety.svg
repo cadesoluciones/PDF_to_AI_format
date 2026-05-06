@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Proteccion del layout ante base64 largo</title>
+  <desc id="desc">Comparacion entre un layout roto por cadenas base64 largas y un layout corregido con min-w-0, minmax, break-all y overflow-auto.</desc>
+  <defs>
+    <marker id="arrow-red" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#16a34a"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #475569; }
+      .panel { fill: white; stroke: #cbd5e1; stroke-width: 2; rx: 18; }
+      .bad { fill: #fff1f2; stroke: #fb7185; }
+      .good { fill: #ecfdf5; stroke: #34d399; }
+      .screen { fill: #0f172a; rx: 12; }
+      .result { fill: #f8fafc; stroke: #e2e8f0; rx: 10; }
+      .label { font: 700 18px Arial, sans-serif; fill: #111827; }
+      .body { font: 400 14px Arial, sans-serif; fill: #475569; }
+      .mono { font: 400 12px Consolas, monospace; fill: #334155; }
+      .bad-line { stroke: #dc2626; stroke-width: 4; fill: none; marker-end: url(#arrow-red); }
+      .good-line { stroke: #16a34a; stroke-width: 4; fill: none; marker-end: url(#arrow-green); }
+      .wrap-line { stroke: #0ea5e9; stroke-width: 3; fill: none; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="720"/>
+  <text x="60" y="58" class="title">Base64 sin romper la UI</text>
+  <text x="60" y="86" class="subtitle">Las imagenes embebidas crean lineas gigantes. El layout debe limitar ancho y permitir corte/scroll.</text>
+
+  <rect x="70" y="140" width="500" height="465" class="panel bad"/>
+  <text x="100" y="178" class="label">Antes: contenedor empujado</text>
+  <text x="100" y="205" class="body">Una cadena data:image/base64 no tiene espacios naturales.</text>
+  <rect x="100" y="245" width="315" height="250" class="screen"/>
+  <rect x="128" y="285" width="255" height="72" class="result"/>
+  <text x="145" y="327" class="mono">data:image/png;base64,iVBORw0KGgoAAA...</text>
+  <path class="bad-line" d="M383 321 H540"/>
+  <text x="100" y="545" class="mono">Problema: el contenido fuerza ancho extra.</text>
+
+  <rect x="630" y="140" width="500" height="465" class="panel good"/>
+  <text x="660" y="178" class="label">Ahora: ancho controlado</text>
+  <text x="660" y="205" class="body">El resultado queda dentro de su columna y permite scroll.</text>
+  <rect x="660" y="245" width="315" height="250" class="screen"/>
+  <rect x="688" y="285" width="255" height="122" class="result"/>
+  <text x="705" y="318" class="mono">data:image/png;base64,</text>
+  <text x="705" y="341" class="mono">iVBORw0KGgoAAAANSUh</text>
+  <text x="705" y="364" class="mono">EUgAAABAAAAA...</text>
+  <path class="good-line" d="M870 428 C830 450 755 450 722 430"/>
+  <text x="660" y="545" class="mono">Solucion: min-w-0 + break-all + overflow-auto.</text>
+
+  <rect x="245" y="642" width="710" height="48" rx="12" fill="#e0f2fe" stroke="#7dd3fc"/>
+  <text x="274" y="672" class="body">Ademas, el grid usa minmax(0, ...) para que cada columna pueda encogerse sin romper la pantalla.</text>
+</svg>

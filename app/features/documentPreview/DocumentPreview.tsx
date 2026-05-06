@@ -1,42 +1,51 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { CgSoftwareUpload, CgTrash, CgTerminal, CgSpinner } from "react-icons/cg";
-import { CgHome } from "react-icons/cg";
 
 interface DocumentPreviewProps {
+    files: File[];
     file: File | null;
     fileUrl: string | null;
-    fileName?: string;
+    directoryMode: boolean;
     selectedOptionTitle?: string;
     processing: boolean;
     canProcess: boolean;
-    onSelectFile: (file: File) => void;
+    onSelectFiles: (files: File[]) => void;
     onRemoveFile: () => void;
     onProcess: () => void;
 }
 
+// Visor y selector de documentos. No convierte: solo entrega archivos y dispara el procesamiento.
 export default function DocumentPreview({
+    files,
     file,
     fileUrl,
-    fileName,
+    directoryMode,
     selectedOptionTitle,
     processing,
     canProcess,
-    onSelectFile,
+    onSelectFiles,
     onRemoveFile,
     onProcess,
 }: DocumentPreviewProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    // Atributos usados por navegadores compatibles para permitir seleccionar una carpeta.
+    const directoryInputProps = directoryMode ? { webkitdirectory: "", directory: "" } : {};
 
     useEffect(() => {
+        // Al cambiar el documento de preview volvemos al inicio del PDF.
         setCurrentPage(1);
     }, [fileUrl]);
 
     const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = event.target.files?.[0];
-        if (selectedFile) {
-            onSelectFile(selectedFile);
+        const selectedFiles = Array.from(event.target.files ?? []);
+
+        if (selectedFiles.length > 0) {
+            onSelectFiles(selectedFiles);
         }
+
+        // Permite volver a elegir el mismo archivo/carpeta y disparar onChange otra vez.
+        event.target.value = "";
     };
 
     const triggerFilePicker = () => {
@@ -44,21 +53,24 @@ export default function DocumentPreview({
     };
 
     return (
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex min-w-0 flex-col gap-4 w-full">
+            {/* En modo carpeta el input acepta multiples archivos; en modo PDF solo uno. */}
             <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf"
+                accept=".pdf,application/pdf"
+                multiple={directoryMode}
                 className="hidden"
                 onChange={handleFileInputChange}
+                {...directoryInputProps}
             />
 
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="min-w-0 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
+                    <div className="min-w-0">
                         <h4 className="text-base font-semibold text-slate-900">Visor de PDF</h4>
                         <p className="mt-1 text-sm text-slate-500">
-                            {file ? "Documento cargado y listo para previsualizar." : "Selecciona un PDF para cargar y previsualizar."}
+                            {file ? "Documento cargado y listo para previsualizar." : "Selecciona PDF para cargar y previsualizar."}
                         </p>
                     </div>
 
@@ -69,7 +81,7 @@ export default function DocumentPreview({
                             className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 transition flex items-center gap-2"
                         >
                             <span><CgSoftwareUpload /></span>
-                            {file ? "Cambiar documento" : "Seleccionar documento"}
+                            {file ? "Cambiar documento" : directoryMode ? "Seleccionar carpeta" : "Seleccionar documento"}
                         </button>
                         {file && (
                             <button
@@ -85,10 +97,15 @@ export default function DocumentPreview({
                 </div>
 
                 {file && (
-                    <div className="mt-4 rounded-3xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-700">
+                    <div className="mt-4 min-w-0 rounded-3xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-700">
                         <p>
-                            <span className="font-semibold">Archivo:</span> {fileName || file.name}
+                            <span className="font-semibold">{directoryMode ? "Vista previa:" : "Archivo:"}</span> <span className="break-all">{file.name}</span>
                         </p>
+                        {directoryMode && (
+                            <p className="mt-1">
+                                <span className="font-semibold">PDFs seleccionados:</span> {files.length}
+                            </p>
+                        )}
                         <p className="mt-1">
                             <span className="font-semibold">Conversión:</span> {selectedOptionTitle || "Ninguna opción seleccionada"}
                         </p>
@@ -96,13 +113,16 @@ export default function DocumentPreview({
                 )}
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div className="min-w-0 rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 {fileUrl ? (
-                    <iframe
-                        title="PDF Viewer"
-                        src={`${fileUrl}#page=${currentPage}`}
-                        className="h-150 w-full border-0"
-                    />
+                    <>
+                        {/* El iframe usa una URL temporal creada en el padre a partir del File seleccionado. */}
+                        <iframe
+                            title="PDF Viewer"
+                            src={`${fileUrl}#page=${currentPage}`}
+                            className="h-150 w-full border-0"
+                        />
+                    </>
                 ) : (
                     <div className="flex min-h-100 items-center justify-center p-8 text-center text-slate-500">
                         <div>
@@ -123,14 +143,18 @@ export default function DocumentPreview({
                         className="w-full rounded-3xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition flex items-center justify-center gap-2"
                     >
                         {processing ? <CgSpinner className="animate-spin" /> : <CgTerminal />}
-                        {processing ? "Procesando…" : "Procesar documento"}
+                        {processing ? "Procesando..." : directoryMode ? "Procesar documentos" : "Procesar documento"}
                     </button>
                     <p className="mt-3 text-sm text-slate-500">
                         {file
                             ? canProcess
-                                ? "Convierte el documento usando la opción seleccionada."
-                                : "Selecciona una opción de conversión para procesar el documento."
-                            : "Carga un documento antes de procesar."}
+                                ? directoryMode
+                                    ? "Convierte todos los PDFs usando la opción seleccionada."
+                                    : "Convierte el documento usando la opción seleccionada."
+                                : "Selecciona una opción de conversión para procesar."
+                            : directoryMode
+                                ? "Carga una carpeta antes de procesar."
+                                : "Carga un documento antes de procesar."}
                     </p>
                 </div>
             </div>

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Mapa completo de la aplicacion React</title>
+  <desc id="desc">Diagrama del flujo de renderizado desde root y routes hasta los componentes de conversion, preview, API y resultados.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #475569; }
+      .card { fill: white; stroke: #cbd5e1; stroke-width: 2; rx: 18; }
+      .route { fill: #eff6ff; stroke: #60a5fa; }
+      .page { fill: #f5f3ff; stroke: #a78bfa; }
+      .feature { fill: #ecfdf5; stroke: #34d399; }
+      .api { fill: #fff7ed; stroke: #fb923c; }
+      .result { fill: #fefce8; stroke: #eab308; }
+      .label { font: 700 18px Arial, sans-serif; fill: #111827; }
+      .body { font: 400 14px Arial, sans-serif; fill: #475569; }
+      .mono { font: 400 13px Consolas, monospace; fill: #334155; }
+      .arrow { stroke: #2563eb; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="760"/>
+  <text x="60" y="58" class="title">Mapa de renderizado de la app</text>
+  <text x="60" y="86" class="subtitle">Desde React Router hasta la conversion real y la visualizacion del resultado.</text>
+
+  <rect x="80" y="140" width="230" height="120" class="card route"/>
+  <text x="110" y="177" class="label">app/root.tsx</text>
+  <text x="110" y="205" class="body">Layout HTML</text>
+  <text x="110" y="228" class="body">Outlet de React Router</text>
+
+  <rect x="390" y="140" width="230" height="120" class="card route"/>
+  <text x="420" y="177" class="label">app/routes.ts</text>
+  <text x="420" y="205" class="body">ruta index</text>
+  <text x="420" y="228" class="mono">routes/home.tsx</text>
+
+  <rect x="700" y="140" width="230" height="120" class="card page"/>
+  <text x="730" y="177" class="label">Home + Welcome</text>
+  <text x="730" y="205" class="body">contenedor visual</text>
+  <text x="730" y="228" class="mono">CADE File converter</text>
+
+  <rect x="390" y="335" width="300" height="135" class="card feature"/>
+  <text x="420" y="372" class="label">OpenDataLoaderConverter</text>
+  <text x="420" y="400" class="body">estado central de la UI</text>
+  <text x="420" y="423" class="mono">activeOption, selectedFiles</text>
+  <text x="420" y="446" class="mono">previewFile, result, error</text>
+
+  <rect x="80" y="550" width="250" height="120" class="card feature"/>
+  <text x="110" y="587" class="label">Options panel</text>
+  <text x="110" y="615" class="body">elige modo</text>
+  <text x="110" y="638" class="mono">json / markdown</text>
+
+  <rect x="390" y="550" width="250" height="120" class="card feature"/>
+  <text x="420" y="587" class="label">DocumentPreview</text>
+  <text x="420" y="615" class="body">elige PDF o carpeta</text>
+  <text x="420" y="638" class="mono">iframe + process button</text>
+
+  <rect x="700" y="550" width="250" height="120" class="card result"/>
+  <text x="730" y="587" class="label">ConversionDisplay</text>
+  <text x="730" y="615" class="body">muestra results[]</text>
+  <text x="730" y="638" class="mono">copiar / descargar / ZIP</text>
+
+  <rect x="790" y="335" width="270" height="135" class="card api"/>
+  <text x="820" y="372" class="label">processFile.tsx</text>
+  <text x="820" y="400" class="body">cliente HTTP Axios</text>
+  <text x="820" y="423" class="mono">transformFile()</text>
+  <text x="820" y="446" class="mono">transformFiles()</text>
+
+  <path class="arrow" d="M310 200 H380"/>
+  <path class="arrow" d="M620 200 H690"/>
+  <path class="arrow" d="M815 260 C790 310 660 320 585 335"/>
+  <path class="arrow" d="M495 470 C360 495 260 520 210 545"/>
+  <path class="arrow" d="M535 470 V540"/>
+  <path class="arrow" d="M610 470 C710 495 785 520 820 545"/>
+  <path class="arrow" d="M690 400 H780"/>
+
+  <rect x="100" y="700" width="1000" height="38" rx="12" fill="#e0f2fe" stroke="#7dd3fc"/>
+  <text x="126" y="724" class="body">Idea clave: OpenDataLoaderConverter es el centro de coordinacion; los demas componentes reciben props y ejecutan responsabilidades pequenas.</text>
+</svg>

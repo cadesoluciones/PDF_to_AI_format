@@ -1,5 +1,6 @@
 import OpenDataLoaderConverter from "~/features/conversion/OpenDataLoaderConverter-v2";
 
+// Pantalla principal: contiene el marco visual y delega la logica al feature de conversion.
 export function Welcome() {
   return (
     <main className="min-h-screen px-4 py-6 md:px-8 lg:px-12 max-w-360 mx-auto">

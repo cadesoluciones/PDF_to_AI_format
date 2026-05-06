@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { transformFile } from "../../api/processFile";
+import { transformFile, transformFiles } from "../../api/processFile";
 import ConversionDisplay from "../conversionDisplay/conversionDisplay";
 import DocumentPreview from "../documentPreview/DocumentPreview";
 import ConversionOptionsPanel from "./ConversionOptionsPanel";
-import type { ConversionOption } from "./conversionTypes";
+import type { ConversionOption, ConversionResponse } from "./conversionTypes";
 
+// Opciones visibles en pantalla. directory decide si el flujo usa un PDF o varios.
 const conversionOptions: ConversionOption[] = [
   {
     id: "pdf-json",
@@ -41,58 +42,77 @@ const conversionOptions: ConversionOption[] = [
 ];
 
 export default function OpenDataLoaderConverter() {
+  // Estado principal del conversor: este componente coordina opciones, archivos, preview y respuesta.
   const [activeOption, setActiveOption] = useState<ConversionOption | null>(null);
-  const [activeFile, setActiveFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ConversionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const availableOptions = useMemo(() => conversionOptions, []);
+  // Si la opcion activa es de directorio, el input permite multiples PDFs/carpeta.
+  const directoryMode = !!activeOption?.directory;
 
   useEffect(() => {
-    return () => {
-      if (fileUrl) {
-        URL.revokeObjectURL(fileUrl);
-      }
-    };
-  }, [fileUrl]);
+    if (!previewFile) {
+      setFileUrl(null);
+      return;
+    }
 
-  const handleFileSelection = (file: File) => {
-    if (file.type !== "application/pdf") {
+    const nextFileUrl = URL.createObjectURL(previewFile);
+    setFileUrl(nextFileUrl);
+
+    // Cada URL temporal se libera al cambiar de PDF para evitar fugas de memoria en el navegador.
+    return () => {
+      URL.revokeObjectURL(nextFileUrl);
+    };
+  }, [previewFile]);
+
+  const handleFileSelection = (files: File[]) => {
+    // El navegador puede entregar otros archivos al seleccionar carpeta; aqui solo pasan PDFs.
+    const pdfFiles = files.filter((file) => 
+      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
+    );
+
+    if (pdfFiles.length === 0) {
       setError("Solo se permiten archivos PDF.");
       return;
     }
 
+    const nextFiles = directoryMode ? pdfFiles : [pdfFiles[0]];
+
+    // selectedFiles guarda todo lo procesable; previewFile solo controla el iframe.
     setError(null);
-    setActiveFile(file);
+    setSelectedFiles(nextFiles);
+    setPreviewFile(nextFiles[0] ?? null);
     setResult(null);
-
-    if (fileUrl) {
-      URL.revokeObjectURL(fileUrl);
-    }
-
-    setFileUrl(URL.createObjectURL(file));
   };
 
   const handleOptionClick = (option: ConversionOption) => {
     setActiveOption(option);
     setError(null);
-  };
-
-  const handleRemoveFile = () => {
-    setActiveFile(null);
     setResult(null);
-    setError(null);
-    if (fileUrl) {
-      URL.revokeObjectURL(fileUrl);
-      setFileUrl(null);
+
+    if (!option.directory && selectedFiles.length > 1) {
+      // Si se cambia de carpeta a PDF individual, se conserva solo el primer documento.
+      const firstFile = selectedFiles[0];
+      setSelectedFiles(firstFile ? [firstFile] : []);
+      setPreviewFile(firstFile ?? null);
     }
   };
 
+  const handleRemoveFile = () => {
+    setSelectedFiles([]);
+    setPreviewFile(null);
+    setResult(null);
+    setError(null);
+  };
+
   const handleProcess = async () => {
-    if (!activeFile) {
-      setError("No hay un PDF cargado para procesar.");
+    if (selectedFiles.length === 0) {
+      setError(directoryMode ? "No hay PDFs cargados para procesar." : "No hay un PDF cargado para procesar.");
       return;
     }
 
@@ -106,10 +126,14 @@ export default function OpenDataLoaderConverter() {
     setResult(null);
 
     try {
-      const response = await transformFile(activeFile, activeOption.mode);
+      // Punto clave del flujo: individual usa transformFile; carpeta usa transformFiles.
+      const response = activeOption.directory
+        ? await transformFiles(selectedFiles, activeOption.mode)
+        : await transformFile(selectedFiles[0], activeOption.mode);
+
       setResult(response);
-    } catch (captureError: any) {
-      setError(captureError?.message || "Error al procesar el archivo.");
+    } catch (captureError: unknown) {
+      setError(captureError instanceof Error ? captureError.message : "Error al procesar el archivo.");
     } finally {
       setIsLoading(false);
     }
@@ -124,15 +148,16 @@ export default function OpenDataLoaderConverter() {
         onOptionSelect={handleOptionClick}
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
+      <div className="grid min-w-0 grid-cols-1 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-6">
         <DocumentPreview
-          file={activeFile}
+          files={selectedFiles}
+          file={previewFile}
           fileUrl={fileUrl}
-          fileName={activeFile?.name}
+          directoryMode={directoryMode}
           selectedOptionTitle={activeOption?.title}
           processing={isLoading}
-          canProcess={!!activeFile && !!activeOption}
-          onSelectFile={handleFileSelection}
+          canProcess={selectedFiles.length > 0 && !!activeOption}
+          onSelectFiles={handleFileSelection}
           onRemoveFile={handleRemoveFile}
           onProcess={handleProcess}
         />
@@ -141,4 +166,3 @@ export default function OpenDataLoaderConverter() {
     </section>
   );
 }
-
