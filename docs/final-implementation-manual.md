@@ -24,7 +24,7 @@ La aplicacion es un conversor de PDFs construido con:
 - Tailwind CSS para estilos.
 - Axios para llamar al backend.
 - Express para la API local.
-- Multer para recibir archivos.
+- Multer 2.1.1 para recibir archivos.
 - `@opendataloader/pdf` para convertir PDFs.
 - Java como dependencia necesaria de `@opendataloader/pdf`.
 - JSZip para descargar resultados multiples comprimidos.
@@ -601,6 +601,8 @@ Este es el archivo que convierte de verdad. El frontend no convierte PDFs por si
 
 ![Flujo interno del backend Express](assets/diagrams/final-backend-flow.svg)
 
+El diagrama refleja el flujo actual del backend, incluida la validacion estricta con `getValidMode(mode)`.
+
 ### Arranque del servidor
 
 ```js
@@ -642,7 +644,7 @@ app.use(express.json());
 
 ### Multer
 
-Multer recibe archivos en memoria:
+Multer esta actualizado a la version 2.1.1 y recibe archivos en memoria:
 
 ```js
 storage: multer.memoryStorage()
@@ -1271,6 +1273,20 @@ Instalar dependencias:
 npm install
 ```
 
+Para una instalacion limpia desde `package-lock.json`, especialmente en CI o VM, usar:
+
+```bash
+npm ci
+```
+
+Comprobar que las dependencias instaladas coinciden con `package.json`:
+
+```bash
+npm ls --depth=0
+```
+
+El estado esperado es que no aparezcan paquetes marcados como `extraneous`.
+
 Levantar frontend:
 
 ```bash
@@ -1406,6 +1422,7 @@ La variable es util si:
 - URL de API configurable con `VITE_API_URL`.
 - Validacion de PDFs en frontend y backend.
 - Limite de tamano y cantidad de archivos.
+- Multer actualizado a 2.1.1.
 - Limite de carpeta ajustado a 20 PDFs por peticion.
 - Validacion estricta de `mode` con HTTP 400 para valores no soportados.
 - Feedback de exito/error al copiar resultados al portapapeles.
@@ -1414,6 +1431,8 @@ La variable es util si:
 - Fallback si las imagenes fallan.
 - Logs internos de conversion visibles solo en desarrollo.
 - Metadata, idioma HTML y README actualizados para `CADE File converter`.
+- Dependencias verificadas con `npm ls --depth=0` sin paquetes `extraneous`.
+- Diagrama de backend actualizado para mostrar `getValidMode(mode)`.
 - Proteccion visual para base64 largo.
 - Manuales y diagramas SVG.
 

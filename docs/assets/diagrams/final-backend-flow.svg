@@ -38,7 +38,7 @@
 
   <rect x="690" y="145" width="240" height="110" class="node safe"/>
   <text x="716" y="180" class="label">Normalizacion</text>
-  <text x="716" y="208" class="mono">normalizeMode(mode)</text>
+  <text x="716" y="208" class="mono">getValidMode(mode)</text>
   <text x="716" y="231" class="mono">sendError(...)</text>
 
   <rect x="380" y="330" width="240" height="125" class="node warn"/>
