@@ -131,7 +131,6 @@ export default function ConversionDisplay({ result, error, isLoading }: Conversi
           <div className="min-w-0 space-y-4">
             {results.map((item, index) => {
               const outputText = getOutputText(item);
-              const fileName = getFallbackFileName(item, index);
 
               return (
                 <div key={`${item.originalName}-${index}`} className="min-w-0 rounded-2xl bg-white p-4 shadow-sm border border-slate-100 overflow-hidden">

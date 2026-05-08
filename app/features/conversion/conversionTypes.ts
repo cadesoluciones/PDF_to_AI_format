@@ -29,7 +29,7 @@ export interface ConversionResultItem {
   error?: string;
 }
 
-// Respuesta general de conversion: un PDF devuelve un resultado; una carpeta devuelve varios.
+// Respuesta general de conversion: un PDF devuelve un resultado, una carpeta devuelve varios.
 export interface ConversionResponse {
   success: boolean;
   mode: ConversionOptionMode;

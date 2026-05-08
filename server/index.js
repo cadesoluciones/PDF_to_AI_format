@@ -9,7 +9,7 @@ import { tmpdir } from 'os';
 const app = express();
 const PORT = 3001;
 const MAX_FILE_SIZE = 25 * 1024 * 1024; //Maximo de tamaño del archivo 
-const MAX_FILES = 100; //Maximo de ficheros acatuales 
+const MAX_FILES = 20; //Maximo de ficheros acatuales 
 
 // CORS permite que el frontend en otro puerto pueda llamar a esta API local.
 app.use(cors());
