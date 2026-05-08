@@ -100,19 +100,6 @@
 - **Resultado actual:** solo hay `build`, `dev`, `server`, `start`, `typecheck`.
 - **Propuesta de solución:** añadir ESLint, Prettier si se desea formato consistente, Vitest/React Testing Library para componentes, Supertest para API y al menos un E2E de conversión básica.
 
-### F-007 - Copia al portapapeles sin manejo de error ni feedback
-
-- **Severidad:** baja.
-- **Archivo:** `app/features/conversionDisplay/conversionDisplay.tsx:92-94`.
-- **Descripción:** `navigator.clipboard.writeText()` se llama sin `try/catch` ni estado visual. Si el navegador bloquea permisos o el contexto no es seguro, el usuario no recibe feedback.
-- **Pasos para reproducir:**
-  1. Cargar un resultado convertido.
-  2. Bloquear permisos de portapapeles o usar un contexto donde Clipboard API no esté disponible.
-  3. Pulsar `Copiar`.
-- **Resultado esperado:** mensaje claro de éxito/error.
-- **Resultado actual:** posible promesa rechazada sin feedback en UI.
-- **Propuesta de solución:** envolver en `try/catch`, comprobar `navigator.clipboard`, mostrar estado de copiado/error y considerar fallback.
-
 ### F-008 - Metadata y documentación siguen siendo de plantilla
 
 - **Severidad:** baja.
@@ -168,9 +155,8 @@
 3. Añadir ESLint y activar `noUnusedLocals`/`noUnusedParameters` o un script equivalente.
 4. Endurecer subida de archivos: magic bytes, timeouts, rate limiting y CORS por whitelist.
 5. Migrar o revisar Multer 1.x y validar compatibilidad con una alternativa mantenida.
-6. Añadir feedback de portapapeles y errores de descarga/copia en frontend.
-7. Actualizar metadata, `lang`, README y guía real de despliegue.
-8. Sustituir `console.log` por logger configurable.
+6. Actualizar metadata, `lang`, README y guía real de despliegue.
+7. Sustituir `console.log` por logger configurable.
 
 ## Cobertura de Pruebas
 

@@ -4,8 +4,8 @@ import { Welcome } from "../pages/welcome/welcome";
 // Metadatos de la ruta index. Se pueden personalizar cuando el producto tenga copy final.
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "CADE File converter" },
+    { name: "description", content: "Convierte PDFs a JSON o Markdown con vista previa y descarga de resultados." },
   ];
 }
 

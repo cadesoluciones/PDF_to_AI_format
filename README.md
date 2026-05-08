@@ -1,87 +1,84 @@
-# Welcome to React Router!
+# CADE File converter
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Aplicacion web para convertir archivos PDF a JSON o Markdown. Incluye seleccion de documentos, vista previa del PDF, procesamiento mediante una API local y descarga de los resultados generados.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Requisitos
 
-## Features
+- Node.js
+- npm
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+## Instalacion
 
-## Getting Started
-
-### Installation
-
-Install the dependencies:
+Instala las dependencias del proyecto:
 
 ```bash
 npm install
 ```
 
-### Development
+## Desarrollo
 
-Start the development server with HMR:
+En desarrollo, el frontend y el backend API se levantan por separado.
+
+Frontend:
 
 ```bash
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+Backend API:
 
-## Building for Production
+```bash
+npm run server
+```
 
-Create a production build:
+La API local usa:
+
+```txt
+http://localhost:3001/api
+```
+
+Por defecto, el frontend llama a esa API local. Para apuntar a otra API, configura la variable:
+
+```bash
+VITE_API_URL=http://localhost:3001/api
+```
+
+## Comandos disponibles
+
+```bash
+npm run dev
+```
+
+Levanta el servidor de desarrollo del frontend.
+
+```bash
+npm run server
+```
+
+Levanta el backend Express que procesa los PDFs.
+
+```bash
+npm run typecheck
+```
+
+Genera tipos de React Router y ejecuta TypeScript.
 
 ```bash
 npm run build
 ```
 
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
+Genera el build de produccion del frontend/SSR.
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+npm run start
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+Sirve el build de produccion generado por React Router.
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+## Flujo basico
 
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+1. Selecciona una opcion de conversion: PDF a JSON, PDF a Markdown, carpeta a JSON o carpeta a Markdown.
+2. Carga uno o varios PDFs.
+3. Previsualiza el documento seleccionado.
+4. Procesa la conversion.
+5. Copia o descarga los resultados.
