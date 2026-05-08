@@ -37,9 +37,9 @@ const upload = multer({
   },
 });
 
-// El backend solo acepta estos dos modos. Si llega otro valor, usa markdown como fallback.
-function normalizeMode(mode) {
-  return mode === 'json' || mode === 'markdown' ? mode : 'markdown';
+// El backend solo acepta estos dos modos; cualquier otro valor se rechaza.
+function getValidMode(mode) {
+  return mode === 'json' || mode === 'markdown' ? mode : null;
 }
 
 // Algunos resultados JSON pueden venir como texto; si no parsea, se devuelve el contenido original.
@@ -226,10 +226,14 @@ async function convertPdfBuffer(file, mode) {
 app.post('/api/transformfile', upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
-    const mode = normalizeMode(req.body.mode);
+    const mode = getValidMode(req.body.mode);
 
     if (!file) {
       return sendError(res, 400, 'No hay un PDF cargado para procesar.');
+    }
+
+    if (!mode) {
+      return sendError(res, 400, 'Modo de conversión no válido. Usa "json" o "markdown".');
     }
 
     const result = await convertPdfBuffer(file, mode);
@@ -249,10 +253,14 @@ app.post('/api/transformfile', upload.single('file'), async (req, res) => {
 app.post('/api/transformfiles', upload.array('files', MAX_FILES), async (req, res) => {
   try {
     const files = Array.isArray(req.files) ? req.files : [];
-    const mode = normalizeMode(req.body.mode);
+    const mode = getValidMode(req.body.mode);
 
     if (files.length === 0) {
       return sendError(res, 400, 'No hay PDFs cargados para procesar.');
+    }
+
+    if (!mode) {
+      return sendError(res, 400, 'Modo de conversión no válido. Usa "json" o "markdown".');
     }
 
     const results = [];
