@@ -44,6 +44,11 @@ function getFallbackFileName(item: ConversionResultItem, index: number) {
 
 export default function ConversionDisplay({ result, error, isLoading }: ConversionDisplayProps) {
   const [isCreatingZip, setIsCreatingZip] = useState(false);
+  const [clipboardStatus, setClipboardStatus] = useState<{
+    key: string;
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const results = result?.results ?? [];
   // Solo los items con exito y texto real entran en descarga/copiar/ZIP.
@@ -86,12 +91,35 @@ export default function ConversionDisplay({ result, error, isLoading }: Conversi
     }
   };
 
-  const copyToClipboard = async (item: ConversionResultItem) => {
+  const copyToClipboard = async (item: ConversionResultItem, resultKey: string) => {
     const outputText = getOutputText(item);
     if (!outputText){
       return;
-    } 
-    await navigator.clipboard.writeText(outputText);
+    }
+
+    if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      setClipboardStatus({
+        key: resultKey,
+        message: "No se pudo copiar al portapapeles.",
+        type: "error",
+      });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(outputText);
+      setClipboardStatus({
+        key: resultKey,
+        message: "Copiado al portapapeles.",
+        type: "success",
+      });
+    } catch {
+      setClipboardStatus({
+        key: resultKey,
+        message: "No se pudo copiar al portapapeles.",
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -131,9 +159,11 @@ export default function ConversionDisplay({ result, error, isLoading }: Conversi
           <div className="min-w-0 space-y-4">
             {results.map((item, index) => {
               const outputText = getOutputText(item);
+              const resultKey = `${item.originalName}-${index}`;
+              const itemClipboardStatus = clipboardStatus?.key === resultKey ? clipboardStatus : null;
 
               return (
-                <div key={`${item.originalName}-${index}`} className="min-w-0 rounded-2xl bg-white p-4 shadow-sm border border-slate-100 overflow-hidden">
+                <div key={resultKey} className="min-w-0 rounded-2xl bg-white p-4 shadow-sm border border-slate-100 overflow-hidden">
                   <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <span className="break-all text-sm font-medium text-slate-900">{item.fileName || item.originalName}</span>
@@ -143,23 +173,35 @@ export default function ConversionDisplay({ result, error, isLoading }: Conversi
                     </div>
 
                     {item.success && outputText && (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => copyToClipboard(item)}
-                          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition flex items-center gap-2"
-                        >
-                          <CgClipboard />
-                          Copiar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => downloadFile(item, index)}
-                          className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition flex items-center gap-2"
-                        >
-                          <CgSoftwareDownload />
-                          {successfulResults.length > 1 ? "Descargar" : "Descargar archivo"}
-                        </button>
+                      <div className="flex flex-col items-start gap-2 sm:items-end">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(item, resultKey)}
+                            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition flex items-center gap-2"
+                          >
+                            <CgClipboard />
+                            Copiar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => downloadFile(item, index)}
+                            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition flex items-center gap-2"
+                          >
+                            <CgSoftwareDownload />
+                            {successfulResults.length > 1 ? "Descargar" : "Descargar archivo"}
+                          </button>
+                        </div>
+
+                        {itemClipboardStatus && (
+                          <p
+                            className={`text-xs ${
+                              itemClipboardStatus.type === "success" ? "text-emerald-600" : "text-rose-600"
+                            }`}
+                          >
+                            {itemClipboardStatus.message}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

@@ -28,7 +28,7 @@
 | `npm run typecheck` | OK | 5.1 s | `react-router typegen && tsc` sin errores. |
 | `npm run build` | OK | 3.6 s | Build de cliente y SSR correcto. Regenera artefactos en `build/`. |
 | `npm audit --audit-level=low` | OK | 2.2 s | `found 0 vulnerabilities`. |
-| `npm exec tsc -- --noEmit --noUnusedLocals --noUnusedParameters` | Error | 3.7 s | Detecta variable no usada en `conversionDisplay.tsx`. No es parte del script oficial. |
+| `npm exec tsc -- --noEmit --noUnusedLocals --noUnusedParameters` | OK | 3.1 s | Check estricto adicional ejecutado tras eliminar la variable no usada. No es parte del script oficial. |
 | `Start-Process node server/index.js` | OK | 4.3 s | Backend Express levantado temporalmente en `http://localhost:3001`. |
 | `POST http://localhost:3001/api/transformfile` sin archivo | OK funcional / salida no cero | 0.7 s | Respuesta esperada HTTP 400: `No hay un PDF cargado para procesar.` PowerShell marca HTTP 400 como excepción. |
 | `POST http://localhost:3001/api/transformfile` con `bad.txt` | OK | 0.6 s | Respuesta esperada HTTP 400: `Solo se permiten archivos PDF.` |
@@ -40,7 +40,6 @@
 | `Invoke-WebRequest http://localhost:3000/` | OK | 0.5 s | HTTP 200; HTML contiene `CADE File converter` y `Visor de PDF`. |
 | `fetch http://localhost:3001/api/transformfile` con backend detenido | Error esperado | 0.6 s | `TypeError: fetch failed`; reproduce que `npm run start` no levanta backend. |
 | `POST http://localhost:3000/api/transformfile` | Error esperado | 0.6 s | HTTP 404; React Router server no expone endpoints API. |
-| `POST /api/transformfile` con modo inválido `xml` | Error funcional | 0.9 s | Devuelve HTTP 200 y convierte como `markdown`; debería rechazar el modo inválido. |
 | `Stop-Process` de procesos Node temporales | OK | 0.3 s | Se cerraron los servidores temporales levantados durante la auditoría. |
 
 ## Pruebas Realizadas
@@ -51,13 +50,12 @@
 | Dependencias | Revisión con `npm ls --depth=0` y `npm audit`. | Pasa con advertencias | Sin vulnerabilidades reportadas; `node_modules` contiene paquetes `extraneous`; `package-lock` marca Multer 1.x como deprecated. |
 | TypeScript | `npm run typecheck`. | Pasa | TypeScript estricto pasa con configuración actual. |
 | Build producción | `npm run build`. | Pasa | Cliente y SSR compilan correctamente. |
-| Static check extra | `tsc --noUnusedLocals --noUnusedParameters`. | Falla | Variable no usada en `app/features/conversionDisplay/conversionDisplay.tsx:134`. |
+| Static check extra | `tsc --noUnusedLocals --noUnusedParameters`. | Pasa | Ejecutado tras eliminar la variable no usada en `conversionDisplay.tsx`. |
 | API PDF individual a Markdown | PDF mínimo generado en memoria enviado a `/api/transformfile`. | Pasa | Devuelve `hello.md` con Markdown esperado. |
 | API PDF individual a JSON | PDF mínimo generado en memoria enviado a `/api/transformfile`. | Pasa | Devuelve JSON parseable con contenido del PDF. |
 | API carpeta/múltiples PDFs | Dos PDFs mínimos enviados a `/api/transformfiles`. | Pasa | Devuelve dos resultados correctos. |
 | Validación sin archivo | POST sin archivo a endpoints individual y múltiple. | Pasa | Devuelve HTTP 400 con JSON de error. |
 | Validación tipo de archivo | Subida de `bad.txt` como archivo. | Pasa | Devuelve HTTP 400 con `Solo se permiten archivos PDF.` |
-| Validación modo inválido | Subida con `mode=xml`. | Falla | El backend responde 200 y convierte como Markdown. |
 | Frontend producción | `npm run start` y GET `/`. | Pasa parcialmente | La pantalla carga, pero la API no existe en el mismo proceso. |
 | Flujo producción completo | Frontend de producción sin `server/index.js`. | Falla | El endpoint `localhost:3001` no está disponible y `localhost:3000/api/transformfile` devuelve 404. |
 
@@ -90,18 +88,6 @@
 - **Resultado actual:** no hay restricción de origen ni throttling.
 - **Propuesta de solución:** configurar `cors({ origin: [...] })`, añadir rate limiting, límites por IP y, si aplica, autenticación o token interno.
 
-### F-004 - Modo de conversión inválido se acepta silenciosamente
-
-- **Severidad:** media.
-- **Archivo:** `server/index.js:41-43`, `server/index.js:229`, `server/index.js:252`.
-- **Descripción:** `normalizeMode()` convierte cualquier valor distinto de `json` o `markdown` a `markdown`. Un cliente que envía `xml`, vacío o un valor corrupto recibe HTTP 200 como si la operación fuese válida.
-- **Pasos para reproducir:**
-  1. Levantar `npm run server`.
-  2. Enviar un PDF válido a `/api/transformfile` con `mode=xml`.
-- **Resultado esperado:** HTTP 400 con mensaje de modo no soportado.
-- **Resultado actual:** HTTP 200, `mode: "markdown"` y archivo `.md`.
-- **Propuesta de solución:** reemplazar el fallback por validación explícita y devolver 400 cuando `mode` no esté en el enum permitido.
-
 ### F-005 - No existen scripts ni configuración de tests/lint
 
 - **Severidad:** media.
@@ -113,17 +99,6 @@
 - **Resultado esperado:** scripts mínimos de calidad automatizada para frontend, backend y API.
 - **Resultado actual:** solo hay `build`, `dev`, `server`, `start`, `typecheck`.
 - **Propuesta de solución:** añadir ESLint, Prettier si se desea formato consistente, Vitest/React Testing Library para componentes, Supertest para API y al menos un E2E de conversión básica.
-
-### F-006 - Variable no usada detectada por TypeScript estricto ampliado
-
-- **Severidad:** baja.
-- **Archivo:** `app/features/conversionDisplay/conversionDisplay.tsx:134`.
-- **Descripción:** `const fileName = getFallbackFileName(item, index);` se declara dentro del `map`, pero no se usa.
-- **Pasos para reproducir:**
-  1. Ejecutar `npm exec tsc -- --noEmit --noUnusedLocals --noUnusedParameters`.
-- **Resultado esperado:** sin errores de símbolos no usados.
-- **Resultado actual:** `TS6133: 'fileName' is declared but its value is never read.`
-- **Propuesta de solución:** eliminar la variable o usarla en el render donde corresponda. Activar `noUnusedLocals` en `tsconfig.json` si se quiere prevenir regresiones similares.
 
 ### F-007 - Copia al portapapeles sin manejo de error ni feedback
 
@@ -193,10 +168,9 @@
 3. Añadir ESLint y activar `noUnusedLocals`/`noUnusedParameters` o un script equivalente.
 4. Endurecer subida de archivos: magic bytes, timeouts, rate limiting y CORS por whitelist.
 5. Migrar o revisar Multer 1.x y validar compatibilidad con una alternativa mantenida.
-6. Validar `mode` con error 400 en vez de fallback silencioso.
-7. Añadir feedback de portapapeles y errores de descarga/copia en frontend.
-8. Actualizar metadata, `lang`, README y guía real de despliegue.
-9. Sustituir `console.log` por logger configurable.
+6. Añadir feedback de portapapeles y errores de descarga/copia en frontend.
+7. Actualizar metadata, `lang`, README y guía real de despliegue.
+8. Sustituir `console.log` por logger configurable.
 
 ## Cobertura de Pruebas
 
