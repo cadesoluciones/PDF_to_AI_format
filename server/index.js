@@ -8,7 +8,7 @@ import { tmpdir } from 'os';
 
 const app = express();
 const PORT = 3001;
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const isDevelopment = process.env.NODE_ENV !== 'production'; // Variable para activar logs detallados solo en desarrollo.
 const MAX_FILE_SIZE = 25 * 1024 * 1024; //Maximo de tamaño del archivo 
 const MAX_FILES = 20; //Maximo de ficheros acatuales 
 

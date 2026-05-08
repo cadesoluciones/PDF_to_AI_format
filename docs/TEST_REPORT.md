@@ -100,19 +100,6 @@
 - **Resultado actual:** solo hay `build`, `dev`, `server`, `start`, `typecheck`.
 - **Propuesta de solución:** añadir ESLint, Prettier si se desea formato consistente, Vitest/React Testing Library para componentes, Supertest para API y al menos un E2E de conversión básica.
 
-### F-009 - Logs de producción exponen rutas temporales y detalles internos
-
-- **Severidad:** baja.
-- **Archivo:** `server/index.js:179-186`, `server/index.js:302`.
-- **Descripción:** el backend imprime rutas de temporales, formato y archivos generados mediante `console.log`. Puede filtrar detalles internos y ensuciar logs en producción.
-- **Pasos para reproducir:**
-  1. Levantar `npm run server`.
-  2. Convertir un PDF.
-  3. Revisar logs del proceso.
-- **Resultado esperado:** logging estructurado por nivel, sin rutas internas salvo modo debug.
-- **Resultado actual:** logs directos en consola.
-- **Propuesta de solución:** usar un logger con niveles, ocultar rutas por defecto y activar trazas solo en desarrollo.
-
 ### F-010 - Dependencia Multer 1.x deprecada
 
 - **Severidad:** baja.
@@ -143,7 +130,6 @@
 3. Añadir ESLint y activar `noUnusedLocals`/`noUnusedParameters` o un script equivalente.
 4. Endurecer subida de archivos: magic bytes, timeouts, rate limiting y CORS por whitelist.
 5. Migrar o revisar Multer 1.x y validar compatibilidad con una alternativa mantenida.
-6. Sustituir `console.log` por logger configurable.
 
 ## Cobertura de Pruebas
 

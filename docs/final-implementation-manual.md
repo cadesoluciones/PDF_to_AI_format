@@ -119,7 +119,7 @@ features/conversion/OpenDataLoaderConverter-v2.tsx
 
 Este archivo define el layout HTML general:
 
-- `<html>`
+- `<html lang="es">`
 - `<head>`
 - fuentes
 - `<body>`
@@ -155,6 +155,13 @@ Carga la pagina `Welcome`:
 export default function Home() {
   return <Welcome />;
 }
+```
+
+Tambien define la metadata principal de la app:
+
+```ts
+{ title: "CADE File converter" }
+{ name: "description", content: "Convierte PDFs a JSON o Markdown con vista previa y descarga de resultados." }
 ```
 
 ### `app/pages/welcome/welcome.tsx`
@@ -599,6 +606,7 @@ Este es el archivo que convierte de verdad. El frontend no convierte PDFs por si
 ```js
 const app = express();
 const PORT = 3001;
+const isDevelopment = process.env.NODE_ENV !== 'production';
 ```
 
 Y al final:
@@ -652,13 +660,13 @@ No llega automaticamente guardado en disco. Despues `convertPdfBuffer` lo escrib
 
 ```js
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
-const MAX_FILES = 100;
+const MAX_FILES = 20;
 ```
 
 Por que existen:
 
 - Evitan subir PDFs demasiado grandes.
-- Evitan carpetas enormes sin control.
+- Evitan carpetas enormes sin control. El limite de 20 reduce el riesgo de sobrecarga accidental en una sola peticion.
 - Protegen memoria y CPU.
 
 ### Filtro PDF
@@ -679,17 +687,17 @@ Esto protege el backend antes de intentar convertir.
 
 ## 11. Helpers del backend
 
-### `normalizeMode`
+### `getValidMode`
 
 ```js
-function normalizeMode(mode) {
-  return mode === 'json' || mode === 'markdown' ? mode : 'markdown';
+function getValidMode(mode) {
+  return mode === 'json' || mode === 'markdown' ? mode : null;
 }
 ```
 
-Evita que llegue un modo invalido.
+Valida que llegue un modo soportado.
 
-Si el frontend manda algo raro, el backend cae a `markdown`.
+Si el cliente manda algo distinto de `json` o `markdown`, el endpoint responde con HTTP 400 usando `sendError`.
 
 ### `safeParseJson`
 
@@ -825,6 +833,15 @@ multipart/form-data
   mode: "json" | "markdown"
 ```
 
+Si `mode` no es `json` ni `markdown`, responde HTTP 400:
+
+```json
+{
+  "success": false,
+  "error": "Modo de conversión no válido. Usa \"json\" o \"markdown\"."
+}
+```
+
 Devuelve:
 
 ```json
@@ -861,6 +878,8 @@ multipart/form-data
   files: PDF[]
   mode: "json" | "markdown"
 ```
+
+Si `mode` no es `json` ni `markdown`, responde HTTP 400 con el mismo contrato de error que el endpoint individual.
 
 Devuelve:
 
@@ -1048,7 +1067,7 @@ isLoading: boolean;
 - Lista de resultados.
 - Errores por archivo.
 - Preview de texto convertido.
-- Boton copiar.
+- Boton copiar con feedback de exito/error.
 - Boton descargar archivo.
 - Boton descargar ZIP si hay varios resultados correctos.
 
@@ -1082,7 +1101,45 @@ function getFallbackFileName(item: ConversionResultItem, index: number) {
 
 Esto evita quedarse sin nombre si el backend no lo manda.
 
-## 18. Descarga individual y ZIP
+### Copiar al portapapeles
+
+El boton `Copiar` comprueba que la Clipboard API exista y envuelve la operacion en `try/catch`:
+
+```ts
+if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+  setClipboardStatus({
+    key: resultKey,
+    message: "No se pudo copiar al portapapeles.",
+    type: "error",
+  });
+  return;
+}
+```
+
+Si la copia funciona, muestra `Copiado al portapapeles.` junto al resultado copiado. Si falla, muestra `No se pudo copiar al portapapeles.`.
+
+## 18. Logs internos del backend
+
+Los logs informativos de conversion solo se muestran en desarrollo:
+
+```js
+if (isDevelopment) {
+  console.log(`Operando en: ${tempFilePath}`);
+  console.log(`Formato seleccionado: ${mode}`);
+}
+```
+
+Y tambien:
+
+```js
+if (isDevelopment) {
+  console.log('Archivos generados en salida:', filesInOutput);
+}
+```
+
+En produccion, con `NODE_ENV=production`, no se imprimen rutas temporales ni detalles internos de salida. Los `console.error` de errores reales se mantienen.
+
+## 19. Descarga individual y ZIP
 
 ### Descarga individual
 
@@ -1116,7 +1173,7 @@ Por que el ZIP se crea en frontend:
 
 Si en el futuro los resultados son gigantes, podria moverse el ZIP al backend.
 
-## 19. Proteccion visual del layout
+## 20. Proteccion visual del layout
 
 Las imagenes en base64 generan cadenas muy largas:
 
@@ -1153,7 +1210,7 @@ Por que:
 - `break-all` corta palabras/cadenas largas.
 - `overflow-auto` permite scroll dentro del bloque.
 
-## 20. Java y `@opendataloader/pdf`
+## 21. Java y `@opendataloader/pdf`
 
 `@opendataloader/pdf` ejecuta un proceso Java internamente.
 
@@ -1200,7 +1257,7 @@ Importante:
 - Abrir terminal nueva.
 - Ejecutar otra vez el server.
 
-## 21. Como ejecutar la app
+## 22. Como ejecutar la app
 
 Desde la carpeta del proyecto:
 
@@ -1238,7 +1295,7 @@ La app necesita:
 - Backend activo.
 - Java disponible en el terminal del backend.
 
-## 22. Variables de entorno
+## 23. Variables de entorno
 
 El frontend usa:
 
@@ -1264,7 +1321,7 @@ La variable es util si:
 - El backend esta en otra maquina.
 - Se despliega la app.
 
-## 23. Contrato final de API
+## 24. Contrato final de API
 
 ### Exito individual
 
@@ -1317,7 +1374,7 @@ La variable es util si:
 }
 ```
 
-## 24. Que existia antes y que se anadio
+## 25. Que existia antes y que se anadio
 
 ### Ya existia
 
@@ -1349,13 +1406,18 @@ La variable es util si:
 - URL de API configurable con `VITE_API_URL`.
 - Validacion de PDFs en frontend y backend.
 - Limite de tamano y cantidad de archivos.
+- Limite de carpeta ajustado a 20 PDFs por peticion.
+- Validacion estricta de `mode` con HTTP 400 para valores no soportados.
+- Feedback de exito/error al copiar resultados al portapapeles.
 - Limpieza de temporales.
 - Intento de extraccion de imagenes.
 - Fallback si las imagenes fallan.
+- Logs internos de conversion visibles solo en desarrollo.
+- Metadata, idioma HTML y README actualizados para `CADE File converter`.
 - Proteccion visual para base64 largo.
 - Manuales y diagramas SVG.
 
-## 25. Guia mental rapida
+## 26. Guia mental rapida
 
 Si quieres saber donde pasa cada cosa:
 
@@ -1389,7 +1451,7 @@ Resultados y descarga:
   app/features/conversionDisplay/conversionDisplay.tsx
 ```
 
-## 26. Validaciones recomendadas
+## 27. Validaciones recomendadas
 
 ### Frontend
 
@@ -1421,7 +1483,7 @@ Comprobar que el Markdown enlaza imagenes:
 rg "diagrams/.+[.]svg" docs\final-implementation-manual.md
 ```
 
-## 27. Pruebas manuales importantes
+## 28. Pruebas manuales importantes
 
 ### PDF individual a JSON
 
@@ -1472,7 +1534,7 @@ rg "diagrams/.+[.]svg" docs\final-implementation-manual.md
 3. Reiniciar VS Code.
 4. Levantar otra vez `npm run server`.
 
-## 28. Errores comunes
+## 29. Errores comunes
 
 ### `Network Error`
 
@@ -1525,7 +1587,7 @@ Alternativa:
 
 - Seleccionar multiples PDFs directamente si el navegador lo permite.
 
-## 29. Mejoras futuras
+## 30. Mejoras futuras
 
 ### OCR real
 
@@ -1563,7 +1625,7 @@ Podrian anadirse opciones:
 - Limite de paginas.
 - Procesamiento paralelo controlado.
 
-## 30. Resumen final
+## 31. Resumen final
 
 La aplicacion completa funciona asi:
 
