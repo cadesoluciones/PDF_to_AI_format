@@ -8,6 +8,7 @@ import { tmpdir } from 'os';
 
 const app = express();
 const PORT = 3001;
+const isDevelopment = process.env.NODE_ENV !== 'production';
 const MAX_FILE_SIZE = 25 * 1024 * 1024; //Maximo de tamaño del archivo 
 const MAX_FILES = 20; //Maximo de ficheros acatuales 
 
@@ -176,14 +177,18 @@ async function convertPdfBuffer(file, mode) {
     await fs.mkdir(tempOutputDirPath, { recursive: true });
     await fs.mkdir(tempImageDirPath, { recursive: true });
 
-    console.log(`Operando en: ${tempFilePath}`);
-    console.log(`Formato seleccionado: ${mode}`);
+    if (isDevelopment) {
+      console.log(`Operando en: ${tempFilePath}`);
+      console.log(`Formato seleccionado: ${mode}`);
+    }
 
     await convertWithImageFallback(tempFilePath, tempOutputDirPath, tempImageDirPath, mode);
 
     // Despues de convertir, buscamos el .json o .md generado por la libreria.
     const filesInOutput = await fs.readdir(tempOutputDirPath);
-    console.log('Archivos generados en salida:', filesInOutput);
+    if (isDevelopment) {
+      console.log('Archivos generados en salida:', filesInOutput);
+    }
 
     if (filesInOutput.length === 0) {
       throw new Error('La libreria no genero archivos. Revisa si el PDF tiene texto legible.');

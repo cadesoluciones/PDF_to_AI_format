@@ -46,7 +46,7 @@
 
 | Área probada | Descripción | Resultado | Observaciones |
 |---|---|---:|---|
-| Configuración del proyecto | Revisión de `package.json`, `tsconfig.json`, `vite.config.ts`, `react-router.config.ts`, `Dockerfile`, `README.md`. | Pasa con advertencias | Proyecto identificable, pero documentación y metadata siguen siendo de plantilla. |
+| Configuración del proyecto | Revisión de `package.json`, `tsconfig.json`, `vite.config.ts`, `react-router.config.ts`, `Dockerfile`, `README.md`. | Pasa con advertencias | Proyecto identificable; quedan advertencias de despliegue y calidad automatizada. |
 | Dependencias | Revisión con `npm ls --depth=0` y `npm audit`. | Pasa con advertencias | Sin vulnerabilidades reportadas; `node_modules` contiene paquetes `extraneous`; `package-lock` marca Multer 1.x como deprecated. |
 | TypeScript | `npm run typecheck`. | Pasa | TypeScript estricto pasa con configuración actual. |
 | Build producción | `npm run build`. | Pasa | Cliente y SSR compilan correctamente. |
@@ -100,18 +100,6 @@
 - **Resultado actual:** solo hay `build`, `dev`, `server`, `start`, `typecheck`.
 - **Propuesta de solución:** añadir ESLint, Prettier si se desea formato consistente, Vitest/React Testing Library para componentes, Supertest para API y al menos un E2E de conversión básica.
 
-### F-008 - Metadata y documentación siguen siendo de plantilla
-
-- **Severidad:** baja.
-- **Archivo:** `app/routes/home.tsx:7-8`, `app/root.tsx:22`, `README.md:1`.
-- **Descripción:** el título y descripción HTML siguen como `New React Router App` / `Welcome to React Router!`; el documento declara `lang="en"` aunque la interfaz está en español. El README también es el template base.
-- **Pasos para reproducir:**
-  1. Ejecutar `npm run start`.
-  2. Abrir la página y revisar `<title>`, meta description y README.
-- **Resultado esperado:** metadata y documentación del producto `CADE File converter`, con idioma correcto.
-- **Resultado actual:** metadata/documentación genérica de plantilla.
-- **Propuesta de solución:** actualizar `meta`, `lang`, README y guía de despliegue real incluyendo backend.
-
 ### F-009 - Logs de producción exponen rutas temporales y detalles internos
 
 - **Severidad:** baja.
@@ -155,8 +143,7 @@
 3. Añadir ESLint y activar `noUnusedLocals`/`noUnusedParameters` o un script equivalente.
 4. Endurecer subida de archivos: magic bytes, timeouts, rate limiting y CORS por whitelist.
 5. Migrar o revisar Multer 1.x y validar compatibilidad con una alternativa mantenida.
-6. Actualizar metadata, `lang`, README y guía real de despliegue.
-7. Sustituir `console.log` por logger configurable.
+6. Sustituir `console.log` por logger configurable.
 
 ## Cobertura de Pruebas
 
