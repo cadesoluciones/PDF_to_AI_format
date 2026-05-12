@@ -8,15 +8,15 @@ import { tmpdir } from 'os';
 
 const app = express();
 const PORT = 3001;
-const isDevelopment = process.env.NODE_ENV !== 'production'; // Variable para activar logs detallados solo en desarrollo.
-const MAX_FILE_SIZE = 25 * 1024 * 1024; //Maximo de tamaño del archivo 
-const MAX_FILES = 20; //Maximo de ficheros acatuales 
+const isDevelopment = process.env.NODE_ENV !== 'production'; // Habilita logs técnicos únicamente fuera de producción.
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // Tamaño máximo permitido por PDF: 25 MB.
+const MAX_FILES = 20; // Número máximo de PDFs aceptados por petición múltiple.
 
-// CORS permite que el frontend en otro puerto pueda llamar a esta API local.
+// Middlewares globales: habilitan llamadas desde el frontend y lectura de cuerpos JSON auxiliares.
 app.use(cors());
 app.use(express.json());
 
-// Multer recibe los PDFs en memoria; despues convertPdfBuffer los escribe como temporales.
+// Multer recibe los PDFs en memoria; la conversión posterior los escribe en archivos temporales controlados.
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -24,7 +24,7 @@ const upload = multer({
     files: MAX_FILES,
   },
   fileFilter: (req, file, callback) => {
-    // Validacion temprana: evita intentar convertir archivos que no sean PDF.
+    // Validación temprana para descartar archivos que no sean PDFs antes de invocar la librería de conversión.
     const isPdf =
       file.mimetype === 'application/pdf' ||
       file.originalname.toLowerCase().endsWith('.pdf');
@@ -38,12 +38,12 @@ const upload = multer({
   },
 });
 
-// El backend solo acepta estos dos modos; cualquier otro valor se rechaza.
+// Valida el modo solicitado por el frontend. Solo se aceptan los formatos expuestos por la interfaz.
 function getValidMode(mode) {
   return mode === 'json' || mode === 'markdown' ? mode : null;
 }
 
-// Algunos resultados JSON pueden venir como texto; si no parsea, se devuelve el contenido original.
+// Algunos resultados JSON pueden llegar como texto; si no se pueden parsear, se conserva el contenido original.
 function safeParseJson(content) {
   try {
     return JSON.parse(content);
@@ -52,12 +52,12 @@ function safeParseJson(content) {
   }
 }
 
-// Convierte cualquier error desconocido en un mensaje seguro para responder a la UI.
+// Normaliza errores desconocidos en un mensaje seguro para responder a la interfaz.
 function getErrorMessage(error) {
   return error instanceof Error ? error.message : 'Error al procesar el archivo.';
 }
 
-// Estructura unica para errores HTTP del backend.
+// Estructura única para respuestas de error HTTP generadas por la API.
 function sendError(res, status, message) {
   return res.status(status).json({
     success: false,
@@ -65,18 +65,18 @@ function sendError(res, status, message) {
   });
 }
 
-// Para Markdown intentamos el formato que puede conservar imagenes; JSON usa el formato base.
+// Markdown intenta conservar imágenes; JSON utiliza el formato base de la librería.
 function getConvertFormat(mode) {
   return mode === 'markdown' ? 'markdown-with-images' : 'json';
 }
 
-// Opendataloader puede generar png/jpg; este helper prepara el mime para dataUri.
+// OpenDataLoader puede generar PNG o JPG; este helper asigna el MIME correcto para data URI.
 function getMimeTypeByExtension(filePath) {
   const extension = path.extname(filePath).toLowerCase();
   return extension === '.jpg' || extension === '.jpeg' ? 'image/jpeg' : 'image/png';
 }
 
-// Recorre la carpeta de salida y convierte imagenes generadas en assets base64.
+// Recorre la carpeta de salida y convierte imágenes generadas en assets base64 consumibles por el frontend.
 async function collectImageAssets(outputDir) {
   const assets = [];
 
@@ -87,7 +87,7 @@ async function collectImageAssets(outputDir) {
       const entryPath = path.join(currentDir, entry.name);
 
       if (entry.isDirectory()) {
-        // Las imagenes pueden generarse en subcarpetas, por eso se recorre recursivamente.
+        // Las imágenes pueden generarse en subcarpetas, por eso se recorre la salida de forma recursiva.
         await readDirectory(entryPath);
         continue;
       }
@@ -113,14 +113,14 @@ async function collectImageAssets(outputDir) {
   return assets;
 }
 
-// Limpia y recrea la salida antes de reintentar una conversion sin imagenes.
+// Limpia y recrea la salida antes de reintentar una conversión sin extracción de imágenes.
 async function resetOutputDirectory(outputDir, imageDir) {
   await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
   await fs.mkdir(outputDir, { recursive: true });
   await fs.mkdir(imageDir, { recursive: true });
 }
 
-// Inserta dataUri en Markdown cuando el texto contiene referencias a las imagenes extraidas.
+// Sustituye referencias a imágenes dentro del Markdown por data URI embebidas.
 function embedImagesInMarkdown(content, assets) {
   return assets.reduce((nextContent, asset) => {
     const escapedPath = asset.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -134,7 +134,7 @@ function embedImagesInMarkdown(content, assets) {
   }, content);
 }
 
-// Primer intento con imagenes; si falla, se reintenta sin imagenes para no perder el texto.
+// Primer intento con imágenes; si falla, se reintenta sin imágenes para conservar al menos el texto.
 async function convertWithImageFallback(tempFilePath, tempOutputDirPath, tempImageDirPath, mode) {
   try {
     await convert([tempFilePath], {
@@ -145,7 +145,7 @@ async function convertWithImageFallback(tempFilePath, tempOutputDirPath, tempIma
       imageDir: tempImageDirPath,
     });
   } catch (error) {
-    console.warn('No se pudieron extraer imagenes. Reintentando sin imagenes:', getErrorMessage(error));
+    console.warn('No se pudieron extraer imágenes. Reintentando sin imágenes:', getErrorMessage(error));
 
     await resetOutputDirectory(tempOutputDirPath, tempImageDirPath);
 
@@ -157,13 +157,13 @@ async function convertWithImageFallback(tempFilePath, tempOutputDirPath, tempIma
   }
 }
 
-// Funcion central de conversion: la usan tanto el endpoint individual como el batch.
+// Función central de conversión compartida por el endpoint individual y el endpoint múltiple.
 async function convertPdfBuffer(file, mode) {
   let tempFilePath = null;
   let tempOutputDirPath = null;
 
   try {
-    // Nombre unico para que conversiones simultaneas no pisen temporales.
+    // Nombre único para evitar colisiones entre conversiones simultáneas en la carpeta temporal.
     const tempName = `pdf_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const extension = mode === 'json' ? '.json' : '.md';
     const tempImageDirName = `${tempName}_images`;
@@ -172,7 +172,7 @@ async function convertPdfBuffer(file, mode) {
     tempOutputDirPath = path.join(tmpdir(), `${tempName}_out`);
     const tempImageDirPath = path.join(tempOutputDirPath, tempImageDirName);
 
-    // La libreria trabaja con rutas de archivo, por eso el buffer de Multer se escribe en tmpdir().
+    // La librería trabaja con rutas de archivo; por eso el buffer de Multer se persiste temporalmente.
     await fs.writeFile(tempFilePath, file.buffer);
     await fs.mkdir(tempOutputDirPath, { recursive: true });
     await fs.mkdir(tempImageDirPath, { recursive: true });
@@ -184,14 +184,14 @@ async function convertPdfBuffer(file, mode) {
 
     await convertWithImageFallback(tempFilePath, tempOutputDirPath, tempImageDirPath, mode);
 
-    // Despues de convertir, buscamos el .json o .md generado por la libreria.
+    // Después de convertir, se localiza el archivo principal generado según el modo solicitado.
     const filesInOutput = await fs.readdir(tempOutputDirPath);
     if (isDevelopment) {
       console.log('Archivos generados en salida:', filesInOutput);
     }
 
     if (filesInOutput.length === 0) {
-      throw new Error('La libreria no genero archivos. Revisa si el PDF tiene texto legible.');
+      throw new Error('La librería no generó archivos. Revisa si el PDF tiene texto legible.');
     }
 
     const resultFile =
@@ -201,7 +201,8 @@ async function convertPdfBuffer(file, mode) {
     const originalBase = file.originalname ? path.parse(file.originalname).name : tempName;
     const finalContent = await fs.readFile(path.join(tempOutputDirPath, resultFile), 'utf-8');
     const assets = await collectImageAssets(tempOutputDirPath);
-    // JSON devuelve content + assets; Markdown intenta quedar como texto autocontenido.
+
+    // JSON conserva contenido estructurado y assets; Markdown intenta quedar como texto autocontenido.
     const parsedData = mode === 'json'
       ? {
           content: safeParseJson(finalContent),
@@ -217,17 +218,17 @@ async function convertPdfBuffer(file, mode) {
       assets,
     };
   } finally {
-    // Limpieza obligatoria: no dejamos PDFs ni salidas temporales en disco.
-    if (tempFilePath){
+    // Limpieza obligatoria para no dejar PDFs ni salidas temporales en disco.
+    if (tempFilePath) {
       await fs.unlink(tempFilePath).catch(() => {});
-    } 
-    if (tempOutputDirPath){
+    }
+    if (tempOutputDirPath) {
       await fs.rm(tempOutputDirPath, { recursive: true, force: true }).catch(() => {});
-    } 
+    }
   }
 }
 
-// Conversion individual: siempre devuelve results con un solo item para mantener contrato uniforme.
+// Conversión individual: siempre devuelve results con un solo item para mantener un contrato uniforme.
 app.post('/api/transformfile', upload.single('file'), async (req, res) => {
   try {
     const file = req.file;
@@ -254,7 +255,7 @@ app.post('/api/transformfile', upload.single('file'), async (req, res) => {
   }
 });
 
-// Conversion multiple/carpeta: procesa cada PDF y guarda success/error por archivo.
+// Conversión múltiple/carpeta: procesa cada PDF y conserva success/error por archivo.
 app.post('/api/transformfiles', upload.array('files', MAX_FILES), async (req, res) => {
   try {
     const files = Array.isArray(req.files) ? req.files : [];
@@ -272,7 +273,7 @@ app.post('/api/transformfiles', upload.array('files', MAX_FILES), async (req, re
 
     for (const file of files) {
       try {
-        // Se procesa uno por uno para controlar memoria y no perder todo si un PDF falla.
+        // El procesamiento secuencial controla memoria y permite aislar fallos por documento.
         const result = await convertPdfBuffer(file, mode);
         results.push(result);
       } catch (error) {
@@ -290,7 +291,7 @@ app.post('/api/transformfiles', upload.array('files', MAX_FILES), async (req, re
       success: hasSuccess,
       mode,
       results,
-      error: hasSuccess ? undefined : 'No se pudo convertir ningun PDF.',
+      error: hasSuccess ? undefined : 'No se pudo convertir ningún PDF.',
     });
   } catch (error) {
     console.error('Error detallado:', error);
@@ -298,7 +299,7 @@ app.post('/api/transformfiles', upload.array('files', MAX_FILES), async (req, re
   }
 });
 
-// Captura errores de Multer y validacion antes de que lleguen como HTML al frontend.
+// Captura errores de Multer y validación para responder JSON en lugar de HTML genérico.
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     return sendError(res, 400, error.message);

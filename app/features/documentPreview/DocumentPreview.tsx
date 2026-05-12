@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useRef, type ChangeEvent } from "react";
 import { CgSoftwareUpload, CgTrash, CgTerminal, CgSpinner } from "react-icons/cg";
 
 interface DocumentPreviewProps {
@@ -14,7 +14,7 @@ interface DocumentPreviewProps {
     onProcess: () => void;
 }
 
-// Visor y selector de documentos. No convierte: solo entrega archivos y dispara el procesamiento.
+// Componente responsable de seleccionar documentos, mostrar la vista previa y notificar acciones al componente padre.
 export default function DocumentPreview({
     files,
     file,
@@ -27,15 +27,9 @@ export default function DocumentPreview({
     onRemoveFile,
     onProcess,
 }: DocumentPreviewProps) {
-    const [currentPage, setCurrentPage] = useState(1);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
-    // Atributos usados por navegadores compatibles para permitir seleccionar una carpeta.
+    // Atributos utilizados por navegadores compatibles para habilitar la selección de carpetas.
     const directoryInputProps = directoryMode ? { webkitdirectory: "", directory: "" } : {};
-
-    useEffect(() => {
-        // Al cambiar el documento de preview volvemos al inicio del PDF.
-        setCurrentPage(1);
-    }, [fileUrl]);
 
     const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(event.target.files ?? []);
@@ -44,7 +38,7 @@ export default function DocumentPreview({
             onSelectFiles(selectedFiles);
         }
 
-        // Permite volver a elegir el mismo archivo/carpeta y disparar onChange otra vez.
+        // Restablece el input para permitir seleccionar de nuevo el mismo archivo o carpeta.
         event.target.value = "";
     };
 
@@ -54,7 +48,7 @@ export default function DocumentPreview({
 
     return (
         <div className="flex min-w-0 flex-col gap-4 w-full">
-            {/* En modo carpeta el input acepta multiples archivos; en modo PDF solo uno. */}
+            {/* En modo carpeta el input acepta múltiples archivos; en modo PDF individual solo uno. */}
             <input
                 ref={fileInputRef}
                 type="file"
@@ -116,10 +110,10 @@ export default function DocumentPreview({
             <div className="min-w-0 rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 {fileUrl ? (
                     <>
-                        {/* El iframe usa una URL temporal creada en el padre a partir del File seleccionado. */}
+                        {/* El iframe consume la URL temporal creada por el padre a partir del PDF seleccionado. */}
                         <iframe
                             title="PDF Viewer"
-                            src={`${fileUrl}#page=${currentPage}`}
+                            src={`${fileUrl}#page=1`}
                             className="h-150 w-full border-0"
                         />
                     </>

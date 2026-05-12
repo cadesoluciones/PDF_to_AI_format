@@ -9,18 +9,18 @@ interface ConversionDisplayProps {
   isLoading: boolean;
 }
 
-// Convierte cualquier data del backend en texto visible/descargable.
+// Transforma la respuesta de cada conversión en texto apto para mostrar, copiar o descargar.
 function getOutputText(item: ConversionResultItem) {
   if (!item.data) return "";
   return typeof item.data === "object" ? JSON.stringify(item.data, null, 2) : String(item.data);
 }
 
-// El mime se decide por extension para que la descarga sea coherente con el modo elegido.
+// El tipo MIME se decide por extensión para mantener coherencia con el modo de conversión elegido.
 function getMimeType(fileName?: string) {
   return fileName?.toLowerCase().endsWith(".json") ? "application/json" : "text/markdown";
 }
 
-// Descarga local en navegador: crea una URL temporal, pulsa un enlace y la libera.
+// Gestiona la descarga local creando una URL temporal, activando un enlace y liberando el recurso.
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -32,11 +32,11 @@ function downloadBlob(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-// Evita perder la descarga si el backend no manda fileName por algun error parcial.
+// Genera un nombre de respaldo cuando el backend no incluye fileName en un resultado válido.
 function getFallbackFileName(item: ConversionResultItem, index: number) {
-  if (item.fileName){
+  if (item.fileName) {
     return item.fileName;
-  } 
+  }
 
   const baseName = item.originalName.replace(/\.pdf$/i, "") || `resultado-${index + 1}`;
   return `${baseName}.md`;
@@ -51,19 +51,19 @@ export default function ConversionDisplay({ result, error, isLoading }: Conversi
   } | null>(null);
 
   const results = result?.results ?? [];
-  // Solo los items con exito y texto real entran en descarga/copiar/ZIP.
 
+  // Solo los resultados correctos con contenido textual se habilitan para copiar, descargar o empaquetar.
   const successfulResults = results.filter((item) =>
-     item.success && getOutputText(item)
+    item.success && getOutputText(item)
   );
 
   const resultError = result && !result.success ? result.error : null;
 
   const downloadFile = (item: ConversionResultItem, index: number) => {
     const outputText = getOutputText(item);
-    if (!outputText){
+    if (!outputText) {
       return;
-    } 
+    }
 
     const fileName = getFallbackFileName(item, index);
     const blob = new Blob([outputText], { type: getMimeType(fileName) });
@@ -71,14 +71,14 @@ export default function ConversionDisplay({ result, error, isLoading }: Conversi
   };
 
   const downloadZip = async () => {
-    if (successfulResults.length === 0){
+    if (successfulResults.length === 0) {
       return;
-    } 
+    }
 
     setIsCreatingZip(true);
 
     try {
-      // El ZIP se genera en frontend con los resultados que ya estan renderizados.
+      // El ZIP se genera en el navegador a partir de los resultados ya recibidos desde la API.
       const zip = new JSZip();
       successfulResults.forEach((item, index) => {
         zip.file(getFallbackFileName(item, index), getOutputText(item));
@@ -93,10 +93,11 @@ export default function ConversionDisplay({ result, error, isLoading }: Conversi
 
   const copyToClipboard = async (item: ConversionResultItem, resultKey: string) => {
     const outputText = getOutputText(item);
-    if (!outputText){
+    if (!outputText) {
       return;
     }
 
+    // La API de Clipboard puede no existir en algunos navegadores o contextos no seguros.
     if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
       setClipboardStatus({
         key: resultKey,
@@ -208,7 +209,7 @@ export default function ConversionDisplay({ result, error, isLoading }: Conversi
 
                   {item.success && outputText && (
                     <>
-                      {/* break-all y overflow-auto evitan que base64 largo rompa el layout. */}
+                      {/* overflow-auto y break-all protegen el layout frente a textos o data URI muy largos. */}
                       <pre className="max-h-96 max-w-full overflow-auto whitespace-pre-wrap break-all text-left text-sm leading-relaxed text-slate-900">
                         {outputText}
                       </pre>

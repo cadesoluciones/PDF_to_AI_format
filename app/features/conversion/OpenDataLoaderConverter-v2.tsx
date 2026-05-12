@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { transformFile, transformFiles } from "../../api/processFile";
 import ConversionDisplay from "../conversionDisplay/conversionDisplay";
 import DocumentPreview from "../documentPreview/DocumentPreview";
 import ConversionOptionsPanel from "./ConversionOptionsPanel";
 import type { ConversionOption, ConversionResponse } from "./conversionTypes";
 
-// Opciones visibles en pantalla. directory decide si el flujo usa un PDF o varios.
+// Catálogo de opciones disponibles. La propiedad directory define si el flujo procesa un PDF o varios.
 const conversionOptions: ConversionOption[] = [
   {
     id: "pdf-json",
@@ -42,7 +42,7 @@ const conversionOptions: ConversionOption[] = [
 ];
 
 export default function OpenDataLoaderConverter() {
-  // Estado principal del conversor: este componente coordina opciones, archivos, preview y respuesta.
+  // Estado principal del conversor: coordina la opción activa, los archivos, la vista previa y la respuesta de la API.
   const [activeOption, setActiveOption] = useState<ConversionOption | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -51,8 +51,7 @@ export default function OpenDataLoaderConverter() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const availableOptions = useMemo(() => conversionOptions, []);
-  // Si la opcion activa es de directorio, el input permite multiples PDFs/carpeta.
+  // Si la opción activa es de directorio, el selector permite cargar múltiples PDFs desde una carpeta.
   const directoryMode = !!activeOption?.directory;
 
   useEffect(() => {
@@ -71,7 +70,7 @@ export default function OpenDataLoaderConverter() {
   }, [previewFile]);
 
   const handleFileSelection = (files: File[]) => {
-    // El navegador puede entregar otros archivos al seleccionar carpeta; aqui solo pasan PDFs.
+    // El navegador puede entregar otros archivos al seleccionar carpeta; solo los PDFs continúan el flujo.
     const pdfFiles = files.filter((file) => 
       file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
     );
@@ -83,7 +82,7 @@ export default function OpenDataLoaderConverter() {
 
     const nextFiles = directoryMode ? pdfFiles : [pdfFiles[0]];
 
-    // selectedFiles guarda todo lo procesable; previewFile solo controla el iframe.
+    // selectedFiles contiene todos los PDFs procesables; previewFile alimenta únicamente la vista previa.
     setError(null);
     setSelectedFiles(nextFiles);
     setPreviewFile(nextFiles[0] ?? null);
@@ -96,7 +95,7 @@ export default function OpenDataLoaderConverter() {
     setResult(null);
 
     if (!option.directory && selectedFiles.length > 1) {
-      // Si se cambia de carpeta a PDF individual, se conserva solo el primer documento.
+      // Si se cambia de carpeta a PDF individual, se conserva solo el primer documento seleccionado.
       const firstFile = selectedFiles[0];
       setSelectedFiles(firstFile ? [firstFile] : []);
       setPreviewFile(firstFile ?? null);
@@ -126,7 +125,7 @@ export default function OpenDataLoaderConverter() {
     setResult(null);
 
     try {
-      // Punto clave del flujo: individual usa transformFile; carpeta usa transformFiles.
+      // El flujo individual envía un PDF; el flujo de carpeta envía la colección completa al backend.
       const response = activeOption.directory
         ? await transformFiles(selectedFiles, activeOption.mode)
         : await transformFile(selectedFiles[0], activeOption.mode);
@@ -143,7 +142,7 @@ export default function OpenDataLoaderConverter() {
     <section className="space-y-8 text-center">
 
       <ConversionOptionsPanel
-        options={availableOptions}
+        options={conversionOptions}
         activeOption={activeOption}
         onOptionSelect={handleOptionClick}
       />

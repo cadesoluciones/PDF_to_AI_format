@@ -1,54 +1,57 @@
 import axios from 'axios';
 import type { ConversionOptionMode, ConversionResponse } from '~/features/conversion/conversionTypes';
 
-// URL base del backend. En local usa localhost; en otros entornos puede venir de VITE_API_URL.
+// URL base de la API. En desarrollo apunta al backend local y en despliegues puede sobrescribirse con VITE_API_URL.
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api';
 
-// Normaliza errores de Axios para que la UI muestre el mensaje del backend cuando exista.
+// Normaliza errores de Axios para que la interfaz muestre el mensaje enviado por el backend cuando esté disponible.
 function getRequestError(error: unknown) {
     if (axios.isAxiosError(error)) {
         const responseError = error.response?.data as { error?: string } | undefined;
         return responseError?.error || error.message;
     }
 
-    return error instanceof Error ? error.message : 'Error al procesar la conversion.';
+    return error instanceof Error ? error.message : 'Error al procesar la conversión.';
 }
 
-// Envia un unico PDF. El nombre "file" debe coincidir con upload.single('file') en server/index.js.
+// Envía un único PDF al endpoint individual. La clave "file" debe coincidir con upload.single('file') en el backend.
 export async function transformFile(file: File, mode: ConversionOptionMode): Promise<ConversionResponse> {
     const formData = new FormData();
-    // IM--El archivo se añade con la clave "file" porque el backend lo recibe con upload.single('file')--
+
+    // El archivo viaja con la clave "file" para que Multer lo reciba como carga individual.
     formData.append("file", file);
-    // mode indica al backend si debe convertir el PDF a JSON o a Markdown.
+
+    // El modo indica al backend si la conversión debe generar JSON o Markdown.
     formData.append("mode", mode);
 
     try {
-        // Axios maneja automáticamente los headers para FormData
+        // Axios configura automáticamente las cabeceras multipart/form-data al recibir FormData.
         const response = await axios.post<ConversionResponse>(`${API_URL}/transformfile`, formData);
-        // La respuesta de éxito siempre está en response.data
+
+        // La respuesta tipada del backend queda disponible en response.data.
         return response.data;
     } catch (error) {
         throw new Error(getRequestError(error));
     }
 }
 
-// Envia varios PDFs. El nombre "files" debe coincidir con upload.array('files') en server/index.js
+// Envía varios PDFs al endpoint de carpeta. La clave "files" debe coincidir con upload.array('files') en el backend.
 export async function transformFiles(files: File[], mode: ConversionOptionMode): Promise<ConversionResponse> {
-    // FormData permite enviar varios archivos en una misma petición multipart/form-data.
     const formData = new FormData();
 
-    // IM--Cada PDF se añade con la misma clave "files" para que Multer los reciba como array--
+    // Cada PDF se adjunta con la misma clave para que Multer construya el array de archivos.
     files.forEach((file) => {
         formData.append("files", file);
     });
 
-    // mode indica al backend si debe convertir todos los PDFs a JSON o a Markdown
+    // El modo se aplica a todos los PDFs incluidos en la petición.
     formData.append("mode", mode);
 
     try {
-        // Axios maneja automáticamente los headers para FormData
+        // Axios configura automáticamente las cabeceras multipart/form-data al recibir FormData.
         const response = await axios.post<ConversionResponse>(`${API_URL}/transformfiles`, formData);
-        // La respuesta de éxito siempre está en response.data.
+
+        // La respuesta tipada del backend queda disponible en response.data.
         return response.data;
     } catch (error) {
         throw new Error(getRequestError(error));
