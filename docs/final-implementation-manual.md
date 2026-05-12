@@ -79,6 +79,7 @@ server/
 
 docs/
   final-implementation-manual.md
+  PDFs_imagen_dentro_Prueba/
   assets/
     diagrams/
       final-app-map.svg
@@ -301,12 +302,10 @@ Responsabilidades:
 - Mostrar descripcion.
 - Notificar que el usuario ha seleccionado esa opcion.
 
-La seleccion se comunica hacia arriba:
+La seleccion se comunica hacia arriba directamente desde el boton de la tarjeta:
 
-```ts
-function handleClick() {
-  onSelect(option);
-}
+```tsx
+onClick={() => onSelect(option)}
 ```
 
 El estado real queda en `OpenDataLoaderConverter-v2.tsx`.
@@ -325,6 +324,9 @@ Este componente no convierte el PDF. Solo se encarga de:
 - Permitir PDF individual o carpeta.
 - Mostrar el nombre del PDF.
 - Mostrar cuantos PDFs hay en modo carpeta.
+- Mostrar que PDF se esta previsualizando dentro de una carpeta.
+- Permitir navegar entre PDFs seleccionados con anterior/siguiente.
+- Mostrar un aviso si se omitieron archivos no PDF.
 - Mostrar el PDF en un `iframe`.
 - Lanzar el boton de procesar.
 
@@ -367,17 +369,23 @@ const pdfFiles = files.filter((file) =>
 );
 ```
 
-Esto evita procesar archivos que no sean PDF.
+Esto evita procesar archivos que no sean PDF. Si la seleccion contiene PDFs validos y otros archivos, los no compatibles se omiten y se muestra un aviso informativo. Si no hay ningun PDF valido, se muestra el error `Solo se permiten archivos PDF.`.
 
 ### Preview
 
-Aunque haya una carpeta completa, el visor muestra un unico PDF:
+Aunque haya una carpeta completa, el visor muestra un unico PDF cada vez:
 
 ```ts
 previewFile
 ```
 
-Normalmente es el primer PDF seleccionado. Esto mantiene la UI simple.
+El componente principal mantiene tambien un indice de preview:
+
+```ts
+previewFileIndex
+```
+
+Cuando se carga una carpeta, el preview empieza en el primer PDF valido. Si hay mas de un PDF, `DocumentPreview` muestra `PDF X DE Y` y botones `Anterior` / `Siguiente` para cambiar el PDF visible sin modificar la lista completa que se enviara al backend.
 
 ## 8. Tipos compartidos del flujo
 
@@ -943,7 +951,7 @@ Usuario selecciona "Directorio a JSON" o "Directorio a Markdown"
   -> El navegador entrega File[]
   -> OpenDataLoaderConverter filtra solo PDFs
   -> selectedFiles guarda todos los PDFs validos
-  -> previewFile queda como primer PDF
+  -> previewFile queda como PDF visible y previewFileIndex permite navegar entre ellos
   -> Usuario pulsa "Procesar documentos"
   -> handleProcess llama transformFiles
   -> processFile.tsx manda POST /api/transformfiles
@@ -1413,7 +1421,9 @@ La variable es util si:
 - `ConversionImageAsset` para imagenes base64.
 - `selectedFiles` como array.
 - `previewFile` separado del array completo.
+- `previewFileIndex` para navegar entre previews en carpetas.
 - Seleccion multiple/carpeta.
+- Aviso visible cuando se omiten archivos no PDF.
 - Endpoint `/api/transformfiles`.
 - Reutilizacion de `convertPdfBuffer`.
 - Procesamiento batch uno por uno.
@@ -1626,9 +1636,9 @@ Ahora se muestra texto crudo. Se podria anadir:
 - Vista renderizada.
 - Toggle entre ambas.
 
-### Selector de preview en carpeta
+### Selector avanzado de preview en carpeta
 
-Ahora se previsualiza el primer PDF. Se podria anadir una lista lateral para elegir que PDF mirar.
+Ahora ya se puede avanzar y retroceder entre PDFs seleccionados con controles `Anterior` y `Siguiente`. Como mejora futura podria anadirse una lista lateral con nombres de archivo para saltar directamente a un PDF concreto.
 
 ### ZIP en backend
 

@@ -46,13 +46,19 @@ export default function OpenDataLoaderConverter() {
   const [activeOption, setActiveOption] = useState<ConversionOption | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewFileIndex, setPreviewFileIndex] = useState(0);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [result, setResult] = useState<ConversionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fileSelectionNotice, setFileSelectionNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Si la opción activa es de directorio, el selector permite cargar múltiples PDFs desde una carpeta.
   const directoryMode = !!activeOption?.directory;
+
+  useEffect(() => {
+    setPreviewFile(selectedFiles[previewFileIndex] ?? null);
+  }, [selectedFiles, previewFileIndex]);
 
   useEffect(() => {
     if (!previewFile) {
@@ -74,8 +80,13 @@ export default function OpenDataLoaderConverter() {
     const pdfFiles = files.filter((file) => 
       file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
     );
+    const skippedFilesCount = files.length - pdfFiles.length;
 
     if (pdfFiles.length === 0) {
+      setSelectedFiles([]);
+      setPreviewFileIndex(0);
+      setResult(null);
+      setFileSelectionNotice(null);
       setError("Solo se permiten archivos PDF.");
       return;
     }
@@ -84,8 +95,13 @@ export default function OpenDataLoaderConverter() {
 
     // selectedFiles contiene todos los PDFs procesables; previewFile alimenta únicamente la vista previa.
     setError(null);
+    setFileSelectionNotice(
+      skippedFilesCount > 0
+        ? `Se cargaron ${nextFiles.length} PDFs. Se ${skippedFilesCount === 1 ? "omitió" : "omitieron"} ${skippedFilesCount} ${skippedFilesCount === 1 ? "archivo no compatible" : "archivos no compatibles"}. Solo se procesan archivos PDF.`
+        : null
+    );
     setSelectedFiles(nextFiles);
-    setPreviewFile(nextFiles[0] ?? null);
+    setPreviewFileIndex(0);
     setResult(null);
   };
 
@@ -98,15 +114,28 @@ export default function OpenDataLoaderConverter() {
       // Si se cambia de carpeta a PDF individual, se conserva solo el primer documento seleccionado.
       const firstFile = selectedFiles[0];
       setSelectedFiles(firstFile ? [firstFile] : []);
-      setPreviewFile(firstFile ?? null);
+      setPreviewFileIndex(0);
+    }
+
+    if (!option.directory) {
+      setFileSelectionNotice(null);
     }
   };
 
   const handleRemoveFile = () => {
     setSelectedFiles([]);
-    setPreviewFile(null);
+    setPreviewFileIndex(0);
     setResult(null);
     setError(null);
+    setFileSelectionNotice(null);
+  };
+
+  const handlePreviewPrevious = () => {
+    setPreviewFileIndex((currentIndex) => Math.max(0, currentIndex - 1));
+  };
+
+  const handlePreviewNext = () => {
+    setPreviewFileIndex((currentIndex) => Math.min(Math.max(selectedFiles.length - 1, 0), currentIndex + 1));
   };
 
   const handleProcess = async () => {
@@ -156,9 +185,14 @@ export default function OpenDataLoaderConverter() {
           selectedOptionTitle={activeOption?.title}
           processing={isLoading}
           canProcess={selectedFiles.length > 0 && !!activeOption}
+          previewFileIndex={previewFileIndex}
+          previewFileCount={selectedFiles.length}
+          fileSelectionNotice={fileSelectionNotice}
           onSelectFiles={handleFileSelection}
           onRemoveFile={handleRemoveFile}
           onProcess={handleProcess}
+          onPreviewPrevious={handlePreviewPrevious}
+          onPreviewNext={handlePreviewNext}
         />
         <ConversionDisplay result={result} error={error} isLoading={isLoading} />
       </div>

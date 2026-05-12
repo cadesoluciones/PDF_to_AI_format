@@ -9,9 +9,14 @@ interface DocumentPreviewProps {
     selectedOptionTitle?: string;
     processing: boolean;
     canProcess: boolean;
+    previewFileIndex: number;
+    previewFileCount: number;
+    fileSelectionNotice: string | null;
     onSelectFiles: (files: File[]) => void;
     onRemoveFile: () => void;
     onProcess: () => void;
+    onPreviewPrevious: () => void;
+    onPreviewNext: () => void;
 }
 
 // Componente responsable de seleccionar documentos, mostrar la vista previa y notificar acciones al componente padre.
@@ -23,13 +28,19 @@ export default function DocumentPreview({
     selectedOptionTitle,
     processing,
     canProcess,
+    previewFileIndex,
+    previewFileCount,
+    fileSelectionNotice,
     onSelectFiles,
     onRemoveFile,
     onProcess,
+    onPreviewPrevious,
+    onPreviewNext,
 }: DocumentPreviewProps) {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     // Atributos utilizados por navegadores compatibles para habilitar la selección de carpetas.
     const directoryInputProps = directoryMode ? { webkitdirectory: "", directory: "" } : {};
+    const showPreviewNavigation = directoryMode && previewFileCount > 1;
 
     const handleFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(event.target.files ?? []);
@@ -91,18 +102,67 @@ export default function DocumentPreview({
                 </div>
 
                 {file && (
-                    <div className="mt-4 min-w-0 rounded-3xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-700">
-                        <p>
-                            <span className="font-semibold">{directoryMode ? "Vista previa:" : "Archivo:"}</span> <span className="break-all">{file.name}</span>
-                        </p>
-                        {directoryMode && (
-                            <p className="mt-1">
-                                <span className="font-semibold">PDFs seleccionados:</span> {files.length}
+                    <div className="mt-4 min-w-0 rounded-3xl border border-slate-100 bg-slate-50 p-5 text-left text-sm text-slate-700">
+                        <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                            <div className="min-w-0">
+                                <p className="text-xs font-semibold uppercase text-slate-500">
+                                    {directoryMode ? "Vista previa" : "Archivo"}
+                                </p>
+                                <p title={file.name} className="mt-1 truncate text-base font-semibold text-slate-900 md:text-lg">
+                                    {file.name}
+                                </p>
+                            </div>
+
+                            <div className="flex min-w-0 flex-col gap-2 md:min-w-[14rem]">
+                                {directoryMode && (
+                                    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                                        <p className="text-xs font-semibold uppercase text-slate-500">PDFs seleccionados</p>
+                                        <p className="mt-1 text-base font-semibold text-slate-900">{files.length}</p>
+                                    </div>
+                                )}
+
+                                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                                    <p className="text-xs font-semibold uppercase text-slate-500">Conversión</p>
+                                    <p className="mt-1 truncate text-sm font-semibold text-slate-900" title={selectedOptionTitle || "Ninguna opción seleccionada"}>
+                                        {selectedOptionTitle || "Ninguna opción seleccionada"}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {showPreviewNavigation && (
+                            <div className="mt-5 border-t border-slate-200 pt-4">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs font-semibold uppercase text-slate-500">
+                                        PDF {previewFileIndex + 1} DE {previewFileCount}
+                                    </span>
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={onPreviewPrevious}
+                                            disabled={previewFileIndex === 0}
+                                            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                                        >
+                                            Anterior
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={onPreviewNext}
+                                            disabled={previewFileIndex >= previewFileCount - 1}
+                                            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                                        >
+                                            Siguiente
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {fileSelectionNotice && (
+                            <p className="mt-5 w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-800">
+                                {fileSelectionNotice}
                             </p>
                         )}
-                        <p className="mt-1">
-                            <span className="font-semibold">Conversión:</span> {selectedOptionTitle || "Ninguna opción seleccionada"}
-                        </p>
                     </div>
                 )}
             </div>
@@ -127,7 +187,7 @@ export default function DocumentPreview({
                 )}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-[1.5fr_auto]">
+            <div className="w-full">
 
                 <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
                     <button
