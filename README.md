@@ -1,15 +1,23 @@
-# CADE File converter
+# CADE File Converter
 
-Aplicacion web para convertir archivos PDF a JSON o Markdown. Incluye seleccion de documentos, vista previa del PDF, procesamiento mediante una API local y descarga de los resultados generados.
+Aplicacion web para convertir archivos PDF a JSON o Markdown. Permite seleccionar documentos individuales o carpetas, previsualizar PDFs, procesarlos mediante una API local y descargar o copiar los resultados generados.
+
+## Stack
+
+- React 19
+- React Router 7
+- TypeScript
+- Tailwind CSS
+- Express
+- Multer
+- OpenDataLoader PDF
 
 ## Requisitos
 
-- Node.js
+- Node.js 20 o superior
 - npm
 
 ## Instalacion
-
-Instala las dependencias del proyecto:
 
 ```bash
 npm install
@@ -17,33 +25,54 @@ npm install
 
 ## Desarrollo
 
-En desarrollo, el frontend y el backend API se levantan por separado.
+En desarrollo se levantan dos procesos: el frontend y la API.
 
-Frontend:
+Terminal 1, frontend:
 
 ```bash
 npm run dev
 ```
 
-Backend API:
+Terminal 2, backend API:
 
 ```bash
 npm run server
 ```
 
-La API local usa:
+URLs locales:
 
 ```txt
-http://localhost:3001/api
+Frontend: http://localhost:5173
+API:      http://localhost:3001/api
 ```
 
-Por defecto, el frontend llama a esa API local. Para apuntar a otra API, configura la variable:
+Por defecto, el frontend llama a `http://localhost:3001/api`. Para usar otra API, define:
 
 ```bash
 VITE_API_URL=http://localhost:3001/api
 ```
 
-## Comandos disponibles
+## API
+
+Endpoints principales:
+
+```txt
+POST /api/transformfile
+POST /api/transformfiles
+```
+
+`/api/transformfile` procesa un PDF individual con el campo `file`.
+
+`/api/transformfiles` procesa varios PDFs con el campo `files`.
+
+Ambos endpoints aceptan el campo `mode` con uno de estos valores:
+
+```txt
+json
+markdown
+```
+
+## Comandos
 
 ```bash
 npm run dev
@@ -55,7 +84,7 @@ Levanta el servidor de desarrollo del frontend.
 npm run server
 ```
 
-Levanta el backend Express que procesa los PDFs.
+Levanta la API Express en `http://localhost:3001`.
 
 ```bash
 npm run typecheck
@@ -74,6 +103,48 @@ npm run start
 ```
 
 Sirve el build de produccion generado por React Router.
+
+## Produccion local
+
+Primero genera el build:
+
+```bash
+npm run build
+```
+
+Despues levanta el frontend de produccion:
+
+```bash
+npm run start
+```
+
+Para que la conversion de PDFs funcione, la API tambien debe estar levantada:
+
+```bash
+npm run server
+```
+
+## Docker
+
+El `Dockerfile` actual construye y sirve el frontend de produccion. La API Express no queda incluida como proceso separado dentro de ese contenedor, asi que para convertir PDFs necesitas levantar la API aparte.
+
+Construir la imagen:
+
+```bash
+docker build -t cade-file-converter .
+```
+
+Ejecutar el frontend:
+
+```bash
+docker run --rm -p 3000:3000 cade-file-converter
+```
+
+Con la API local levantada con `npm run server`, abre:
+
+```txt
+http://localhost:3000
+```
 
 ## Flujo basico
 
